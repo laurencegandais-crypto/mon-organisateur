@@ -58,7 +58,7 @@
       .week-agenda{grid-template-columns:1fr}.week-day{min-height:auto}.agenda-list{min-width:620px}
       .app-item{touch-action:pan-y}.app-item.swiping{transition:transform .15s ease}
     }
-    @media(min-width:721px){.today-panel{display:block}}</style>
+    @media(min-width:721px){.today-panel{display:block}}.today-shortcuts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.today-shortcuts button{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;align-items:center;column-gap:9px;padding:13px;text-align:left;background:#fffdf9;border:1px solid white;border-radius:15px;box-shadow:var(--shadow)}.today-shortcuts button>span{grid-row:1/3;font-size:1.35rem}.today-shortcuts strong{font-size:.88rem}.today-shortcuts small{color:var(--muted)}@media(max-width:720px){.today-shortcuts{grid-template-columns:repeat(2,1fr);gap:8px}.today-shortcuts button{min-height:68px;padding:11px}}</style>
 </head>
 <body>
   <main class="wrap">
@@ -73,7 +73,7 @@
           <button class="panel today-card" type="button" data-today-open="goals"><span>Suivi du jour</span><strong id="todayGoalCount">0</strong><small id="todayGoalText">À compléter</small></button>
           <button class="panel today-card" type="button" data-today-open="meals"><span>Repas prévus</span><strong id="todayMealCount">0</strong><small id="todayMealText">À renseigner</small></button>
         </div>
-        <section class="panel today-detail"><div class="today-detail-head"><h2>Le programme du jour</h2><button class="secondary" id="otherSectionsButton" type="button">Autres rubriques</button></div><div id="todayTimeline"></div></section>
+        <section class="today-shortcuts" aria-label="Raccourcis personnels"><button type="button" data-today-open="shopping"><span>🛒</span><strong>Courses</strong><small>Ma liste</small></button><button type="button" data-today-open="journal"><span>☀️</span><strong>Journal</strong><small>Ma journée</small></button><button type="button" data-today-open="inbox"><span>📥</span><strong>À classer</strong><small>Mes idées</small></button><button type="button" data-today-open="favorites"><span>★</span><strong>Favoris</strong><small>Mes adresses</small></button></section><section class="panel today-detail"><div class="today-detail-head"><h2>Le programme du jour</h2><button class="secondary" id="otherSectionsButton" type="button">Autres rubriques</button></div><div id="todayTimeline"></div></section>
       </div>
     </section>
     <section class="tab-panel" id="panelGoals" hidden role="tabpanel" aria-labelledby="tabGoals"><div class="dashboard">
