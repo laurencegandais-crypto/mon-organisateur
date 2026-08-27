@@ -118,8 +118,8 @@
           cloudSync.unsubscribe=firestoreSdk.onSnapshot(cloudSync.document,async snapshot=>{
             if(snapshot.exists()){
               const data=snapshot.data();cloudSync.applying=true;
-              if(data.goalsState&&Array.isArray(data.goalsState.themes)&&Array.isArray(data.goalsState.goals))state=data.goalsState;
-              if(data.meals&&typeof data.meals==='object')meals=data.meals;if(data.organizer&&typeof data.organizer==='object'){organizer=data.organizer;localStorage.setItem(organizerKey,JSON.stringify(organizer));renderTasks();renderPurchases();renderAgenda();}
+              if(data.goalsState&&Array.isArray(data.goalsState.themes)&&Array.isArray(data.goalsState.goals)){state=data.goalsState;[['Bien-être','Beauté'],['Travail & études','Alimentation'],['Maison','Sommeil'],['Pour moi','Sport']].forEach(([oldName,newName])=>{const theme=state.themes.find(x=>x.name===oldName);if(theme)theme.name=newName})}
+              if(data.meals&&typeof data.meals==='object')meals=data.meals;if(data.organizer&&typeof data.organizer==='object'){organizer={tasks:[],appointments:[],purchases:[],sleep:{},...data.organizer};organizer.tasks||=[];organizer.appointments||=[];organizer.purchases||=[];organizer.sleep||={};localStorage.setItem(organizerKey,JSON.stringify(organizer));renderTasks();renderPurchases();renderAgenda();}
           
 
     localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));
