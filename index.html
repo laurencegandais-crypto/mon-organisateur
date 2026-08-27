@@ -86,7 +86,7 @@
       try{
         const version='12.18.0';
         const [appSdk,authSdk,firestoreSdk]=await Promise.all([import(`https://www.gstatic.com/firebasejs/${version}/firebase-app.js`),import(`https://www.gstatic.com/firebasejs/${version}/firebase-auth.js`),import(`https://www.gstatic.com/firebasejs/${version}/firebase-firestore.js`)]);
-        const firebaseConfig={apiKey:'AIzaSyBsfDBR2oB20UEFbOxjFFnEH5r-6uKX0Il',authDomain:'mon-organisateur-lg.firebaseapp.com',projectId:'mon-organisateur-lg',storageBucket:'mon-organisateur-lg.firebasestorage.app',messagingSenderId:'1080473447467',appId:'1:1080473447467:web:0a9752f88cffef8f06ce6e'};
+        const firebaseConfig={apiKey:'AIzaSyBsfDBR2oB20UEFbOxjFFnEH5r-6uKX0lI',authDomain:'mon-organisateur-lg.firebaseapp.com',projectId:'mon-organisateur-lg',storageBucket:'mon-organisateur-lg.firebasestorage.app',messagingSenderId:'1080473447467',appId:'1:1080473447467:web:0a9752f88cffef8f06ce6e'};
         const app=appSdk.initializeApp(firebaseConfig),auth=authSdk.getAuth(app),database=firestoreSdk.getFirestore(app),provider=new authSdk.GoogleAuthProvider();
         cloudSync.setDocument=firestoreSdk.setDoc;cloudSync.serverTime=firestoreSdk.serverTimestamp;
         button.addEventListener('click',async()=>{button.disabled=true;try{if(auth.currentUser)await authSdk.signOut(auth);else await authSdk.signInWithPopup(auth,provider)}catch(error){console.error(error);if(error.code==='auth/popup-blocked')await authSdk.signInWithRedirect(auth,provider);else if(error.code==='auth/unauthorized-domain')setSyncStatus('Connexion disponible après la publication du site');else setSyncStatus('Connexion impossible — réessayez')}finally{button.disabled=false}});
