@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v30 : palette contrastée inspirée de la référence bleu marine et bordeaux -->
+<!-- Version v31 : onglet Repas entièrement harmonisé en marine et bordeaux -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -151,6 +151,25 @@
     .total-box{background:linear-gradient(145deg,#fff,#f2f4f7);border-color:#dfe3e9}
     .floating-add{color:#fff!important;background:#781325!important;box-shadow:0 12px 28px rgb(120 19 37 / 32%)}
     @media(max-width:1024px){.mobile-nav{background:rgb(255 255 255 / 98%);border-color:#dce1e8;box-shadow:0 -10px 30px rgb(2 27 57 / 15%)}.mobile-nav::before{height:2px;background:linear-gradient(90deg,#021b39 0 68%,#781325 68%)}.mobile-nav button[data-mobile-tab]{--nav:#021b39;--nav-pale:#e8edf3;color:#021b39}.mobile-nav button[data-mobile-tab].active{color:#781325;background:#f4e7ea;box-shadow:inset 0 -3px 0 #781325,0 5px 14px rgb(120 19 37 / 13%)}.mobile-more{border-color:#dce1e8}.quick-sheet{background:#fff}}
+
+    /* Repas : suppression définitive des anciennes teintes ocre et marron. */
+    #panelMeals .eyebrow{color:#781325}
+    #panelMeals .meal-plan-day{background:#fff;border-color:#dfe3e9}
+    #panelMeals .meal-plan-day.today-plan{background:#f4e7ea;border-color:#e7ccd3}
+    #panelMeals .meal-slot select,#panelMeals .meal-slot input{color:#021b39;background:#f7f9fb;border:1px solid #dce2ea}
+    #panelMeals .meal-slot input:focus,#panelMeals .meal-slot select:focus{border-color:#781325;outline:0;box-shadow:0 0 0 3px rgb(120 19 37 / 8%)}
+    #panelMeals .recipe-tools input{color:#021b39;background:#fff;border-color:#dce2ea}
+    #panelMeals .recipe-filters button{color:#021b39;background:#e8edf3;border:1px solid #dce2ea}
+    #panelMeals .recipe-filters button.active{color:#fff;background:#781325;border-color:#781325}
+    #panelMeals .recipe-card{background:#fff;border-color:#dfe3e9}
+    #panelMeals .recipe-form{background:#fff;border:1px solid #dfe3e9}
+    #panelMeals .recipe-favorite input{accent-color:#781325}
+    #panelMeals .meal-kind{background:#f1f4f7}.meal-kind strong{color:#021b39}
+    #panelMeals .meal-input{color:#021b39;background:#f2f5f8;border-color:#dce2ea}
+    #panelMeals .meal-cell.today,#panelMeals .date-head.today{color:#781325;background:#f4e7ea}
+    #panelMeals .nav button{color:#021b39;background:#e8edf3;border-color:#dce2ea}
+    #panelMeals .bar-fill{background:linear-gradient(90deg,#021b39,#781325)}
+    @media(max-width:850px){#panelMeals .meal-mobile-switch{background:#e8edf3;border:1px solid #dce2ea}#panelMeals .meal-mobile-switch button{color:#021b39}#panelMeals .meal-mobile-switch button.active{color:#fff;background:#781325;box-shadow:0 4px 12px rgb(120 19 37 / 22%)}#panelMeals .recipe-library .recipe-form:not([hidden]){background:#fff}}
 </style>
 </head>
 <body>
