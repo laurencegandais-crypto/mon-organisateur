@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v20 : sauvegarde discrète et synchronisation Firebase nettoyée -->
+<!-- Version v21 : URL permanente, sauvegarde discrète et synchronisation Firebase nettoyée -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -179,6 +179,7 @@
     </section><p class="footer">Vos objectifs, vos cases cochées et vos repas sont enregistrés automatiquement dans votre navigateur.</p>
   </main>
   <script>
+    if(location.search&&location.hostname.endsWith('github.io')){history.replaceState(null,'',location.pathname)}
     const defaultThemes=[{name:'Beauté',color:'#f2d5dc'},{name:'Alimentation',color:'#f4e7b7'},{name:'Sommeil',color:'#d1def2'},{name:'Sport',color:'#bfdcc9'}];
     const starterGoals=[{text:'Boire 6 verres d’eau',theme:0},{text:'Faire 10 minutes d’étirements',theme:0},{text:'Définir la priorité du jour',theme:1},{text:'Faire une session sans distraction',theme:1},{text:'Ranger pendant 10 minutes',theme:2},{text:'Préparer demain',theme:2},{text:'Lire quelques pages',theme:3},{text:'Noter une chose positive',theme:3}];
     const pastelPalette=['#f2d5dc','#d0e8e3','#efdcc5','#cfdcf1','#e4d8f0','#e5e8ba'];
