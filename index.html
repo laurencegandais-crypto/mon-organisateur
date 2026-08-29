@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v19 : sauvegarde discrète en bas de page -->
+<!-- Version v20 : sauvegarde discrète et synchronisation Firebase nettoyée -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -199,7 +199,8 @@
     function writeSafetyBackup(reason){const snapshot=safetySnapshot(reason),previous=readSafetyBackup();if(snapshot&&snapshotScore(snapshot)>=snapshotScore(previous))localStorage.setItem(dataBackupKey,JSON.stringify(snapshot))}
     function writeBackupHistory(reason){const snapshot=safetySnapshot(reason);if(!snapshot)return;const history=readBackupHistory(),last=history[0];if(last&&Date.now()-Number(last.savedAt)<60000&&snapshotScore(last)===snapshotScore(snapshot))return;history.unshift(snapshot);while(history.length>8)history.pop();try{localStorage.setItem(dataHistoryKey,JSON.stringify(history))}catch{history.pop();try{localStorage.setItem(dataHistoryKey,JSON.stringify(history))}catch{}}}
     function touchLocalRevision(){localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('local-change');writeBackupHistory('automatic')}
-    function scheduleCloudSave(){if(!cloudSync.ready||cloudSync.applying||!cloudSync.user||!cloudSync.document||!cloudSync.setDocument)return;if(snapshotScore(safetySnapshot())===0){setSyncStatus('Aucune donnée locale à envoyer — copie Google préservée');return}clearTimeout(cloudSync.timer);cloudSync.timer=setTimeout(async()=>{setSyncStatus('Synchronisation…');try{await cloudSync.setDocument(cloudSync.document,{goalsState:state,meals,organizer,extras,updatedAt:cloudSync.serverTime(),clientUpdatedAt:localRevision||Date.now()});setSyncStatus('Synchronisé avec Google')}catch(error){console.error(error);setSyncStatus('Google impossible · '+(error?.code||'connexion')+' — données locales conservées')}},500)}
+    function cleanCloudData(){const clean=JSON.parse(JSON.stringify({goalsState:state,meals,organizer,extras,clientUpdatedAt:localRevision||Date.now()}));clean.updatedAt=cloudSync.serverTime();return clean}
+    function scheduleCloudSave(){if(!cloudSync.ready||cloudSync.applying||!cloudSync.user||!cloudSync.document||!cloudSync.setDocument)return;if(snapshotScore(safetySnapshot())===0){setSyncStatus('Aucune donnée locale à envoyer — copie Google préservée');return}clearTimeout(cloudSync.timer);cloudSync.timer=setTimeout(async()=>{setSyncStatus('Synchronisation…');try{await cloudSync.setDocument(cloudSync.document,cleanCloudData());setSyncStatus('Synchronisé avec Google')}catch(error){console.error(error);setSyncStatus('Google impossible · '+(error?.code||'connexion')+' — données locales conservées')}},500)}
     function save(){localStorage.setItem(storageKey,JSON.stringify(state));touchLocalRevision();scheduleCloudSave();if(typeof organizer!=='undefined')renderToday()}
     function saveMeals(){localStorage.setItem(mealStorageKey,JSON.stringify(meals));touchLocalRevision();scheduleCloudSave();if(typeof organizer!=='undefined')renderToday()}
     const escapeHtml=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
