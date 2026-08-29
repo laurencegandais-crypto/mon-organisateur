@@ -1,0 +1,25 @@
+{
+  "name": "Faciliter mon quotidien",
+  "short_name": "Mon quotidien",
+  "description": "Mon organisation personnelle au quotidien",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#172a45",
+  "icons": [
+    {
+      "src": "./apple-touch-icon.png?v=29",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./app-icon-512.png?v=29",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
