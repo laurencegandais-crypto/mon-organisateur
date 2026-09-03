@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v48 : onglet Recettes, filtres mobiles et suppression d’un repas -->
+<!-- Version v49 : position de l’onglet Recettes corrigée -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -228,7 +228,7 @@
     .meal-saved-row{display:grid;grid-template-columns:minmax(0,1fr) 40px;gap:7px;align-items:center}
     .meal-saved-row .meal-saved-value{min-width:0}.meal-remove-button{display:grid;place-items:center;width:40px;height:40px;padding:0;color:#781325;background:#f4e7ea;border:1px solid #ead5da;border-radius:10px}
     .meal-remove-button svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-    @media(max-width:1024px){.mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))}.mobile-nav button[data-mobile-tab="recipes"]{--nav:#021b39;--nav-pale:#e8edf3}.recipe-filter-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:1024px){.mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))}.mobile-nav button[data-mobile-tab="agenda"]{order:1}.mobile-nav button[data-mobile-tab="meals"]{order:2}.mobile-nav button[data-mobile-tab="recipes"]{order:3;--nav:#021b39;--nav-pale:#e8edf3}.mobile-nav button[data-mobile-tab="shopping"]{order:4}.recipe-filter-grid{grid-template-columns:1fr 1fr}}
     @media(max-width:420px){.recipe-filter-grid{grid-template-columns:1fr}}
 </style>
 </head>
