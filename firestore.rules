@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function accountEmail() {
+      return request.auth.token.email;
+    }
+
+    match /users/{userId}/{document=**} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /mealShares/{shareId} {
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.memberEmails is list
+        && accountEmail() in request.resource.data.memberEmails;
+
+      allow read: if signedIn()
+        && accountEmail() in resource.data.memberEmails;
+
+      allow update: if signedIn()
+        && accountEmail() in resource.data.memberEmails
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && (
+          request.auth.uid == resource.data.ownerUid
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'meals',
+            'recipes',
+            'weekPlan',
+            'mealDetails',
+            'shopping',
+            'clientUpdatedAt',
+            'updatedAt',
+            'updatedBy'
+          ])
+        );
+
+      allow delete: if signedIn()
+        && request.auth.uid == resource.data.ownerUid;
+    }
+  }
+}
