@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v52 : confirmation d’un repas conservé ou modifié -->
+<!-- Version v53 : onglet Suivi placé en dernier sur iPad -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -245,6 +245,8 @@
       #panelMeals .meal-course-fields,#panelMeals .meal-detail-toggle{grid-column:2}.meal-week-actions{position:relative}.meal-grocery-button{position:static!important}
     }
     .meal-choice-actions{display:flex;grid-column:2;justify-content:flex-end;gap:7px;margin-top:3px}.meal-choice-actions button{min-height:38px;padding:7px 12px;border-radius:10px;font-size:.72rem;font-weight:800}.meal-choice-cancel{color:#566273;background:#edf1f5;border:1px solid #dce2ea}.meal-choice-confirm{color:#fff;background:#781325;border:1px solid #781325}
+    /* Sur iPad, Suivi reste volontairement la dernière rubrique. */
+    @media(min-width:768px){.tab[data-tab="agenda"]{order:1}.tab[data-tab="meals"]{order:2}.tab[data-tab="recipes"]{order:3}.tab[data-tab="shopping"]{order:4}.tab[data-tab="purchases"]{order:5}.tab[data-tab="todos"]{order:6}.tab[data-tab="journal"]{order:7}.tab[data-tab="goals"]{order:99}.mobile-more [data-mobile-tab="goals"]{order:99}}
 </style>
 </head>
 <body>
