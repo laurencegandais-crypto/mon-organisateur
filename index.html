@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v45 : rubrique Suivi déplacée dans Plus -->
+<!-- Version v46 : planning repas validé du 4 au 8 septembre 2026 -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -317,9 +317,9 @@
     function familySharedData(){return{meals:JSON.parse(JSON.stringify(meals||{})),recipes:JSON.parse(JSON.stringify(extras?.recipes||[])),weekPlan:JSON.parse(JSON.stringify(extras?.weekPlan||{})),mealDetails:JSON.parse(JSON.stringify(extras?.mealDetails||{})),shopping:JSON.parse(JSON.stringify(extras?.shopping||[])),clientUpdatedAt:familyRevision||Date.now(),updatedBy:familySync.user?.email||''}}
     function setFamilyShareStatus(message,state=''){document.querySelectorAll('#familyShareStatus,#familyShoppingStatus').forEach(box=>{box.className='family-share-status '+(box.id==='familyShoppingStatus'?'mini ':'')+state;box.lastElementChild.textContent=box.id==='familyShoppingStatus'?(state==='connected'?'Partage familial actif':state==='error'?'Partage familial indisponible':'Partage familial non connecté'):message})}
     function renderFamilyShareControls(data){const form=document.querySelector('#familyShareForm'),input=document.querySelector('#familyPartnerEmail'),button=document.querySelector('#familyShareButton'),user=familySync.user;if(!form||!input||!button)return;if(!user){form.hidden=false;input.disabled=true;button.disabled=true;return}const owner=data?.ownerUid===user.uid,members=(data?.memberEmails||[]).map(familyEmail),partner=members.find(email=>email!==familyEmail(user.email));form.hidden=Boolean(data&&!owner);input.disabled=false;button.disabled=false;if(owner){input.value=partner||'';button.textContent=partner?'Modifier le partage':'Activer le partage'}else{input.value='';button.textContent='Activer le partage'}}
-    function applyFamilySnapshot(data){familySync.applying=true;if(data.meals&&typeof data.meals==='object')meals=data.meals;extras={...extras,recipes:Array.isArray(data.recipes)?data.recipes:extras.recipes,shopping:Array.isArray(data.shopping)?data.shopping:extras.shopping,weekPlan:data.weekPlan&&typeof data.weekPlan==='object'?data.weekPlan:extras.weekPlan,mealDetails:data.mealDetails&&typeof data.mealDetails==='object'?data.mealDetails:extras.mealDetails};localStorage.setItem(mealStorageKey,JSON.stringify(meals));localStorage.setItem(previewExtrasKey,JSON.stringify(extras));familyRevision=Number(data.clientUpdatedAt)||Date.now();localStorage.setItem(familyRevisionKey,String(familyRevision));renderMeals();renderExtras();renderAgenda();renderToday();familySync.applying=false}
+    function applyFamilySnapshot(data){familySync.applying=true;if(data.meals&&typeof data.meals==='object')meals=data.meals;extras={...extras,recipes:Array.isArray(data.recipes)?data.recipes:extras.recipes,shopping:Array.isArray(data.shopping)?data.shopping:extras.shopping,weekPlan:data.weekPlan&&typeof data.weekPlan==='object'?data.weekPlan:extras.weekPlan,mealDetails:data.mealDetails&&typeof data.mealDetails==='object'?data.mealDetails:extras.mealDetails};localStorage.setItem(mealStorageKey,JSON.stringify(meals));localStorage.setItem(previewExtrasKey,JSON.stringify(extras));familyRevision=Number(data.clientUpdatedAt)||Date.now();localStorage.setItem(familyRevisionKey,String(familyRevision));renderMeals();renderExtras();renderAgenda();renderToday();familySync.applying=false;importValidatedMealPlan20260904()}
     function scheduleFamilySave(){if(!familySync.ready||familySync.applying||!familySync.user||!familySync.document||!familySync.setDocument)return;familyRevision=Date.now();localStorage.setItem(familyRevisionKey,String(familyRevision));clearTimeout(familySync.timer);familySync.timer=setTimeout(async()=>{try{const payload=familySharedData();payload.updatedAt=familySync.serverTime();await familySync.setDocument(familySync.document,payload,{merge:true});setFamilyShareStatus('Repas et courses synchronisés sur les deux comptes','connected')}catch(error){console.error(error);setFamilyShareStatus('Partage momentanément indisponible — vos données restent sur cet iPhone','error')}},450)}
-    function connectFamilySharing(user){if(familySync.unsubscribe){familySync.unsubscribe();familySync.unsubscribe=null}familySync.user=user;familySync.ready=false;familySync.document=null;renderFamilyShareControls();if(!user?.email||!familySync.query)return;setFamilyShareStatus('Recherche de votre espace familial…');const request=familySync.query(familySync.collection(familySync.database,'mealShares'),familySync.where('memberEmails','array-contains',familyEmail(user.email)),familySync.limit(1));familySync.unsubscribe=familySync.onSnapshot(request,snapshot=>{if(snapshot.empty){familySync.ready=false;familySync.document=null;setFamilyShareStatus('Aucun partage actif. Indiquez le compte Google de votre mari.');renderFamilyShareControls();return}const shared=snapshot.docs[0],data=shared.data();familySync.document=shared.ref;familySync.ready=true;applyFamilySnapshot(data);const members=(data.memberEmails||[]).filter(email=>familyEmail(email)!==familyEmail(user.email));setFamilyShareStatus(members.length?'Partagé avec '+members.join(', '):'Espace familial actif','connected');renderFamilyShareControls(data)},error=>{console.error(error);familySync.ready=false;setFamilyShareStatus('Le partage doit être autorisé dans Firebase avant son activation','error');renderFamilyShareControls()})}
+    function connectFamilySharing(user){if(familySync.unsubscribe){familySync.unsubscribe();familySync.unsubscribe=null}familySync.user=user;familySync.ready=false;familySync.document=null;renderFamilyShareControls();if(!user?.email||!familySync.query)return;setFamilyShareStatus('Recherche de votre espace familial…');const request=familySync.query(familySync.collection(familySync.database,'mealShares'),familySync.where('memberEmails','array-contains',familyEmail(user.email)),familySync.limit(1));familySync.unsubscribe=familySync.onSnapshot(request,snapshot=>{if(snapshot.empty){familySync.ready=false;familySync.document=null;setFamilyShareStatus('Aucun partage actif. Indiquez le compte Google de votre mari.');renderFamilyShareControls();importValidatedMealPlan20260904();return}const shared=snapshot.docs[0],data=shared.data();familySync.document=shared.ref;familySync.ready=true;applyFamilySnapshot(data);const members=(data.memberEmails||[]).filter(email=>familyEmail(email)!==familyEmail(user.email));setFamilyShareStatus(members.length?'Partagé avec '+members.join(', '):'Espace familial actif','connected');renderFamilyShareControls(data)},error=>{console.error(error);familySync.ready=false;setFamilyShareStatus('Le partage doit être autorisé dans Firebase avant son activation','error');renderFamilyShareControls()})}
     async function createFamilyShare(partnerEmail){const user=familySync.user,email=familyEmail(partnerEmail),ownEmail=familyEmail(user?.email);if(!user||!ownEmail)throw new Error('Connectez-vous d’abord avec votre compte Google.');if(!email||email===ownEmail)throw new Error('Indiquez l’autre compte Google à inviter.');const reference=familySync.doc(familySync.database,'mealShares',user.uid);familyRevision=Date.now();localStorage.setItem(familyRevisionKey,String(familyRevision));const payload={ownerUid:user.uid,ownerEmail:ownEmail,memberEmails:[ownEmail,email],...familySharedData(),updatedAt:familySync.serverTime()};await familySync.setDocument(reference,payload,{merge:true});familySync.document=reference;familySync.ready=true;setFamilyShareStatus('Partage activé avec '+email,'connected');renderFamilyShareControls(payload)}
     document.querySelector('#familyShareForm').addEventListener('submit',async event=>{event.preventDefault();const button=document.querySelector('#familyShareButton');button.disabled=true;try{await createFamilyShare(document.querySelector('#familyPartnerEmail').value);showToast('Repas et courses partagés')}catch(error){console.error(error);setFamilyShareStatus(error.message||'Impossible d’activer le partage','error')}finally{button.disabled=false}})
     const escapeHtml=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -572,6 +572,84 @@
     function shoppingQuantityLabel(item,includeProduct=false){const quantity=new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2}).format(shoppingNumber(item.quantity)),unit=normalizeShoppingUnit(item.unit),amount=unit==='pièce'?quantity:quantity+' '+unit;return includeProduct?amount+' '+String(item.text||'').trim():amount}
     function parseRecipeIngredients(recipe){return String(recipe?.ingredients||'').split(/\n+/).map(line=>{const parts=line.split(';'),raw=String(parts.shift()||'').trim(),legacyCategory=parts.join(';').trim(),known=['Fruits & légumes','Frais','Épicerie','Maison','Beauté','Autre'],parsed=parseShoppingIngredient(raw);return{...parsed,category:known.includes(legacyCategory)?legacyCategory:guessIngredientAisle(parsed.text)}}).filter(x=>x.text)}
     function addIngredientsToShopping(recipes){let added=0,merged=0;recipes.forEach(recipe=>parseRecipeIngredients(recipe).forEach(item=>{const result=addOrMergeShopping(item,String(recipe.id));if(result==='added')added++;if(result==='merged')merged++}));consolidateShoppingItems();saveExtras();const parts=[];if(added)parts.push(added+' produit'+(added>1?'s':'')+' ajouté'+(added>1?'s':''));if(merged)parts.push(merged+' quantité'+(merged>1?'s':'')+' cumulée'+(merged>1?'s':''));showToast(parts.join(' · ')||'La liste est déjà à jour')}
+    function importValidatedMealPlan20260904(){
+      const importKey='repas-valides-2026-09-04-v1';if(localStorage.getItem(importKey))return;
+      const recipes=[
+        {id:'plan-20260904-poulet',name:'Poulet aux courgettes et poivrons, riz',type:'Plat',device:'Thermomix + Air Fryer',prepTime:10,cookTime:20,duration:30,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`4 pièces filets de poulet;Frais
+2 pièces courgettes;Fruits & légumes
+2 pièces poivrons;Fruits & légumes
+300 g riz;Épicerie
+2 c. à soupe huile d’olive;Épicerie
+1 c. à café paprika;Épicerie`,instructions:`Couper les courgettes et les poivrons en morceaux réguliers.
+Mélanger les légumes avec une cuillère d’huile, la moitié du paprika, du sel et du poivre.
+Cuire les légumes 12 minutes à 190 °C dans l’Airfryer en remuant à mi-cuisson.
+Assaisonner le poulet avec le reste d’huile et de paprika, puis le déposer avec les légumes.
+Poursuivre la cuisson 10 à 12 minutes, jusqu’à ce que le poulet soit bien cuit.
+Pendant ce temps, cuire le riz avec le mode Cuisson du riz du Thermomix, puis servir ensemble.`,notes:'Prévoir du sel et du poivre du placard. Couper un filet épais pour vérifier la cuisson à cœur.'},
+        {id:'plan-20260905-veloute',name:'Velouté de tomates et lentilles corail, tartines de chèvre',type:'Plat',device:'Thermomix TM7',prepTime:10,cookTime:20,duration:30,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`800 g tomates;Fruits & légumes
+1 pièce oignon;Fruits & légumes
+150 g lentilles corail;Épicerie
+700 ml eau;Épicerie
+1 pièce cube de bouillon de légumes;Épicerie
+8 tranches pain de campagne;Épicerie
+120 g fromage de chèvre;Frais`,instructions:`Couper l’oignon en deux, le placer dans le bol et hacher 5 secondes, vitesse 5.
+Ajouter les tomates coupées, les lentilles corail, l’eau et le cube de bouillon.
+Cuire 20 minutes à 100 °C, vitesse 1.
+Mixer progressivement 1 minute de la vitesse 5 à la vitesse 9.
+Rectifier l’assaisonnement et ajouter un peu d’eau si le velouté est trop épais.
+Faire griller le pain, répartir le chèvre dessus et servir avec le velouté.`,notes:'Prévoir du sel et du poivre du placard. Pour une texture plus douce, ajouter une cuillère de crème déjà disponible.'},
+        {id:'plan-20260906-filet-mignon',name:'Filet mignon à la moutarde, pommes grenaille et haricots verts',type:'Plat',device:'Thermomix + Air Fryer',prepTime:10,cookTime:25,duration:35,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`700 g filet mignon de porc;Frais
+800 g pommes de terre grenaille;Fruits & légumes
+600 g haricots verts;Fruits & légumes
+2 c. à soupe moutarde;Épicerie
+150 ml crème légère;Frais
+1 c. à soupe huile d’olive;Épicerie`,instructions:`Couper le filet mignon en médaillons épais et mélanger avec une cuillère de moutarde, du sel et du poivre.
+Laver puis couper les pommes grenaille en deux. Les mélanger avec l’huile.
+Cuire les pommes de terre 15 minutes à 190 °C dans l’Airfryer en remuant une fois.
+Ajouter les médaillons et poursuivre 10 à 12 minutes, en les retournant à mi-cuisson.
+Cuire les haricots verts à la vapeur dans le Varoma jusqu’à ce qu’ils soient tendres.
+Mélanger la crème avec la seconde cuillère de moutarde, réchauffer doucement et servir en sauce.`,notes:'Prévoir du sel et du poivre du placard. Le porc doit être cuit à cœur tout en restant moelleux.'},
+        {id:'plan-20260906-frittata',name:'Frittata aux légumes et feta, salade de tomates',type:'Plat',device:'Air Fryer',prepTime:10,cookTime:15,duration:25,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`8 pièces œufs;Frais
+1 pièce courgette;Fruits & légumes
+1 pièce poivron;Fruits & légumes
+150 g feta;Frais
+400 g tomates;Fruits & légumes
+1 c. à soupe huile d’olive;Épicerie`,instructions:`Couper la courgette et le poivron en petits dés.
+Faire précuire les légumes 6 minutes à 190 °C dans un moule compatible Airfryer avec un peu d’huile.
+Battre les œufs avec du sel et du poivre, puis incorporer la moitié de la feta émiettée.
+Verser sur les légumes et répartir le reste de feta.
+Cuire 10 à 12 minutes à 170 °C, jusqu’à ce que le centre soit pris.
+Couper les tomates en salade et servir avec la frittata.`,notes:'Prévoir du sel, du poivre et un peu de vinaigre du placard pour la salade.'},
+        {id:'plan-20260907-cabillaud',name:'Cabillaud citronné, pommes de terre et courgettes',type:'Plat',device:'Air Fryer',prepTime:10,cookTime:20,duration:30,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`4 pièces filets de cabillaud;Frais
+800 g pommes de terre;Fruits & légumes
+2 pièces courgettes;Fruits & légumes
+1 pièce citron;Fruits & légumes
+2 c. à soupe huile d’olive;Épicerie
+1 c. à café herbes de Provence;Épicerie`,instructions:`Couper les pommes de terre en petits quartiers et les courgettes en demi-rondelles.
+Mélanger les légumes avec une cuillère d’huile, les herbes, du sel et du poivre.
+Cuire 14 minutes à 190 °C dans l’Airfryer en remuant à mi-cuisson.
+Déposer le cabillaud sur les légumes, ajouter le reste d’huile et le jus d’un demi-citron.
+Poursuivre la cuisson 8 à 10 minutes à 180 °C selon l’épaisseur du poisson.
+Servir avec le reste du citron en quartiers.`,notes:'Prévoir du sel et du poivre du placard. Le cabillaud est prêt lorsqu’il se détache facilement en lamelles.'},
+        {id:'plan-20260908-curry',name:'Curry doux de pois chiches, tomates et poivrons, riz',type:'Plat',device:'Thermomix TM7',prepTime:10,cookTime:20,duration:30,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`2 boîtes pois chiches;Épicerie
+400 g tomates;Fruits & légumes
+1 pièce poivron;Fruits & légumes
+1 pièce oignon;Fruits & légumes
+200 ml lait de coco;Épicerie
+250 g riz;Épicerie
+2 c. à café curry doux;Épicerie`,instructions:`Couper l’oignon en deux, le placer dans le bol et hacher 5 secondes, vitesse 5.
+Ajouter le poivron en dés et une cuillère d’huile du placard, puis rissoler 5 minutes à 120 °C, vitesse mijotage.
+Ajouter les tomates, le lait de coco et le curry. Cuire 10 minutes à 100 °C, sens inverse, vitesse mijotage.
+Rincer les pois chiches, les ajouter et poursuivre 7 minutes à 100 °C, sens inverse, vitesse mijotage.
+Cuire le riz avec le mode Cuisson du riz ou séparément.
+Rectifier l’assaisonnement et servir le curry avec le riz.`,notes:'Prévoir une cuillère d’huile, du sel et du poivre du placard. Utiliser un curry doux afin que le plat convienne à toute la famille.'}
+      ];
+      const slots={'2026-09-04:dinner':'plan-20260904-poulet','2026-09-05:lunch':'__none','2026-09-05:dinner':'plan-20260905-veloute','2026-09-06:lunch':'plan-20260906-filet-mignon','2026-09-06:dinner':'plan-20260906-frittata','2026-09-07:dinner':'plan-20260907-cabillaud','2026-09-08:dinner':'plan-20260908-curry'};
+      recipes.forEach(recipe=>{const index=extras.recipes.findIndex(item=>String(item.id)===recipe.id);if(index>=0)extras.recipes[index]={...extras.recipes[index],...recipe};else extras.recipes.push(recipe)});
+      Object.entries(slots).forEach(([key,value])=>{extras.weekPlan[key]=value;const label=value==='__none'?'':recipes.find(recipe=>recipe.id===value)?.name||'';if(label)meals[key]=label;else delete meals[key]});
+      addIngredientsToShopping(recipes);
+      localStorage.setItem(importKey,'1');localStorage.setItem(mealStorageKey,JSON.stringify(meals));localStorage.setItem(previewExtrasKey,JSON.stringify(extras));touchLocalRevision();renderMeals();renderExtras();renderAgenda();renderToday();scheduleCloudSave();scheduleFamilySave();showToast('Planning, recettes et courses importés');
+    }
     function shoppingListText(){const pending=extras.shopping.filter(x=>!x.done).map(normalizeShoppingItem),groups=new Map();pending.forEach(x=>{if(!groups.has(x.category))groups.set(x.category,[]);groups.get(x.category).push(shoppingQuantityLabel(x,true))});return 'Liste de courses\n\n'+[...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([category,items])=>category+'\n'+items.map(x=>'• '+x).join('\n')).join('\n\n')}
     let recipeFilter='all';function applyRecipeFilters(){const query=document.querySelector('#recipeSearch').value.trim().toLocaleLowerCase('fr');document.querySelectorAll('#recipeList .recipe-card').forEach(card=>{const text=card.textContent.toLocaleLowerCase('fr'),matchesQuery=!query||text.includes(query),matchesFilter=recipeFilter==='all'||(recipeFilter==='favorite'&&card.textContent.trim().startsWith('★'))||(recipeFilter==='starter'&&text.includes('entrée'))||(recipeFilter==='main'&&text.includes('plat'))||(recipeFilter==='dessert'&&text.includes('dessert'))||(recipeFilter==='thermomix'&&text.includes('thermomix'))||(recipeFilter==='airfryer'&&text.includes('air fryer'));card.hidden=!(matchesQuery&&matchesFilter)})}
     function renderShoppingGroups(){const list=document.querySelector('#shoppingList');if(!extras.shopping.length){list.className='shopping-groups';list.innerHTML='<p class="hint">Votre liste est vide.</p>';return}const preferred=['Fruits & légumes','Frais','Épicerie','Maison','Beauté','Autre'],groups=new Map();extras.shopping.map(normalizeShoppingItem).forEach(item=>{const aisle=item.category||'Autre';if(!groups.has(aisle))groups.set(aisle,[]);groups.get(aisle).push(item)});const aisles=[...groups.keys()].sort((a,b)=>{const ai=preferred.indexOf(a),bi=preferred.indexOf(b);return(ai<0?999:ai)-(bi<0?999:bi)||a.localeCompare(b,'fr')});list.className='shopping-groups';list.innerHTML=aisles.map(aisle=>{const items=groups.get(aisle).sort((a,b)=>Number(a.done)-Number(b.done)||a.text.localeCompare(b.text,'fr')),pending=items.filter(x=>!x.done).length;return '<section class="shopping-aisle"><h3><span>'+escapeHtml(aisle)+'</span><small>'+pending+' restant'+(pending>1?'s':'')+'</small></h3><div>'+items.map(x=>'<div class="shopping-row '+(x.done?'done':'')+'"><input type="checkbox" data-shop-toggle="'+x.id+'" '+(x.done?'checked':'')+' aria-label="Cocher '+escapeHtml(x.text)+'"><button class="shopping-product-button" type="button" data-shop-edit="'+x.id+'" aria-label="Modifier '+escapeHtml(x.text)+', quantité '+escapeHtml(shoppingQuantityLabel(x))+'"><strong>'+escapeHtml(x.text)+'</strong><small>'+escapeHtml(shoppingQuantityLabel(x))+'</small></button><button type="button" data-extra-delete="shopping:'+x.id+'" aria-label="Supprimer '+escapeHtml(x.text)+'" title="Supprimer"></button></div>').join('')+'</div></section>'}).join('')}
