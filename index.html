@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v36 : menus passés repliés et navigation mobile avec bouton Plus -->
+<!-- Version v37 : bouton Plus verrouillé en dernière position sur mobile -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -199,7 +199,7 @@
     @media(max-width:1024px){
       .mobile-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;overflow:visible;mask-image:none;-webkit-mask-image:none;padding-inline:max(8px,env(safe-area-inset-left))}
       .mobile-nav button{min-width:0;min-height:54px;flex:auto;scroll-snap-align:none}
-      .mobile-nav #mobileMoreButton{color:#021b39}
+      .mobile-nav #mobileMoreButton{order:99;color:#021b39}
       .mobile-nav #mobileMoreButton .mobile-plus-icon{display:grid;place-items:center;width:28px;height:28px;color:white;background:#781325;border-radius:50%;font-size:1.35rem;font-weight:500;line-height:1}
       .mobile-more.open{grid-template-columns:repeat(2,minmax(0,1fr))}
       .meal-past-days-toggle{font-size:.78rem}
