@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v66 : recettes importées, suppression des repas fiabilisée et nouvelle icône -->
+<!-- Version v67 : import des recettes garanti après synchronisation -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -714,7 +714,7 @@
     function ingredientMissingAfterReserves(item,stock){const unit=reserveUnitData(item.unit),key=reserveProductKey(item)+'|'+unit.group;if(!stock.has(key))return item;const available=stock.get(key),needed=shoppingNumber(item.quantity)*unit.factor;if(available===Infinity||available>=needed){if(available!==Infinity)stock.set(key,available-needed);return null}stock.set(key,0);return{...item,quantity:(needed-available)/unit.factor}}
     function addIngredientsToShopping(recipes){let added=0,merged=0,covered=0;const stock=reserveStock();recipes.forEach(recipe=>parseRecipeIngredients(recipe).forEach(item=>{const needed=ingredientMissingAfterReserves(item,stock);if(!needed){covered++;return}if(shoppingNumber(needed.quantity)<shoppingNumber(item.quantity))covered++;const result=addOrMergeShopping(needed,String(recipe.id));if(result==='added')added++;if(result==='merged')merged++}));consolidateShoppingItems();saveExtras();const parts=[];if(added)parts.push(added+' produit'+(added>1?'s':'')+' ajouté'+(added>1?'s':''));if(merged)parts.push(merged+' quantité'+(merged>1?'s':'')+' cumulée'+(merged>1?'s':''));if(covered)parts.push(covered+' couvert'+(covered>1?'s':'')+' par vos réserves');showToast(parts.join(' · ')||'La liste est déjà à jour')}
     function importPdfRecipes20260907(){
-      const importId='pdf-recipes-2026-09-07-v1';extras.recipeImports=extras.recipeImports&&typeof extras.recipeImports==='object'?extras.recipeImports:{};if(extras.recipeImports[importId])return 0;
+      const importId='pdf-recipes-2026-09-07-v1';extras.recipeImports=extras.recipeImports&&typeof extras.recipeImports==='object'?extras.recipeImports:{};const alreadyMarked=Boolean(extras.recipeImports[importId]);
       const recipes=[
         {id:'pdf-20260907-risotto-tomates-courgettes',name:'Risotto aux tomates séchées et courgettes',type:'Plat',device:'Casserole',prepTime:10,cookTime:30,duration:40,servings:2,sourceServings:2,favorite:false,url:'',ingredients:`60 g riz complet;Épicerie
 60 g tomates séchées à l’huile égouttées;Épicerie
@@ -837,7 +837,7 @@ Ajouter la courgette râpée et le bouillon de légumes.
 Cuire 15 à 18 minutes à 100 °C, sens inverse, vitesse mijotage, sans le gobelet.
 Incorporer le parmesan et mélanger délicatement avant de servir.`,notes:''}
       ];
-      let added=0;recipes.forEach(recipe=>{const hasId=extras.recipes.some(item=>sameId(item.id,recipe.id)),hasName=extras.recipes.some(item=>String(item.name||'').trim().toLocaleLowerCase('fr')===recipe.name.toLocaleLowerCase('fr'));if(!hasId&&!hasName){extras.recipes.push(recipe);added++}});extras.recipeImports[importId]=Date.now();localStorage.setItem(previewExtrasKey,JSON.stringify(extras));touchLocalRevision();renderExtras();scheduleCloudSave();scheduleFamilySave();if(added)showToast(added+' recettes ajoutées à votre bibliothèque');return added
+      let added=0;recipes.forEach(recipe=>{const hasId=extras.recipes.some(item=>sameId(item.id,recipe.id)),hasName=extras.recipes.some(item=>String(item.name||'').trim().toLocaleLowerCase('fr')===recipe.name.toLocaleLowerCase('fr'));if(!hasId&&!hasName){extras.recipes.push(recipe);added++}});if(added||!alreadyMarked){extras.recipeImports[importId]=Date.now();localStorage.setItem(previewExtrasKey,JSON.stringify(extras));touchLocalRevision();renderExtras();scheduleCloudSave();scheduleFamilySave()}if(added)showToast(added+' recettes ajoutées à votre bibliothèque');return added
     }
     function importValidatedMealPlan20260904(){
       const importKey='repas-valides-2026-09-04-v1';if(localStorage.getItem(importKey))return;
