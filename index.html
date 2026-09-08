@@ -1,13 +1,13 @@
 <!doctype html>
-<!-- Version v65 : recettes et partage familial de nouveau accessibles -->
+<!-- Version v66 : recettes importées, suppression des repas fiabilisée et nouvelle icône -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Faciliter mon quotidien</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=37">
-  <link rel="icon" type="image/png" sizes="512x512" href="./app-icon-512.png?v=37">
-  <link rel="manifest" href="./manifest.webmanifest?v=37">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=66">
+  <link rel="icon" type="image/png" sizes="512x512" href="./app-icon-512.png?v=66">
+  <link rel="manifest" href="./manifest.webmanifest?v=66">
   <meta name="apple-mobile-web-app-title" content="Faciliter mon quotidien">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -415,7 +415,7 @@
     function save(){localStorage.setItem(storageKey,JSON.stringify(state));touchLocalRevision();scheduleCloudSave();if(typeof organizer!=='undefined')renderToday()}
     function saveMeals(){localStorage.setItem(mealStorageKey,JSON.stringify(meals));touchLocalRevision();scheduleCloudSave();scheduleFamilySave();if(typeof organizer!=='undefined'){renderToday();renderAgenda()}}
     function familyEmail(value){return String(value||'').trim().toLowerCase()}
-    function familySharedData(){return{meals:JSON.parse(JSON.stringify(meals||{})),recipes:JSON.parse(JSON.stringify(extras?.recipes||[])),weekPlan:JSON.parse(JSON.stringify(extras?.weekPlan||{})),mealDetails:JSON.parse(JSON.stringify(extras?.mealDetails||{})),shopping:JSON.parse(JSON.stringify(extras?.shopping||[])),reserves:JSON.parse(JSON.stringify(extras?.reserves||[])),clientUpdatedAt:familyRevision||Date.now(),updatedBy:familySync.user?.email||''}}
+    function familySharedData(){return{meals:JSON.parse(JSON.stringify(meals||{})),recipes:JSON.parse(JSON.stringify(extras?.recipes||[])),recipeImports:JSON.parse(JSON.stringify(extras?.recipeImports||{})),weekPlan:JSON.parse(JSON.stringify(extras?.weekPlan||{})),mealDetails:JSON.parse(JSON.stringify(extras?.mealDetails||{})),mealDeletions:JSON.parse(JSON.stringify(extras?.mealDeletions||[])),shopping:JSON.parse(JSON.stringify(extras?.shopping||[])),reserves:JSON.parse(JSON.stringify(extras?.reserves||[])),clientUpdatedAt:familyRevision||Date.now(),updatedBy:familySync.user?.email||''}}
     function setFamilyShareStatus(message,state=''){document.querySelectorAll('#familyShareStatus,#familyShoppingStatus').forEach(box=>{box.className='family-share-status '+(box.id==='familyShoppingStatus'?'mini ':'')+state;box.lastElementChild.textContent=box.id==='familyShoppingStatus'?(state==='connected'?'Partage familial actif':state==='error'?'Partage familial indisponible':'Partage familial non connecté'):message})}
     function renderFamilyShareControls(data){const form=document.querySelector('#familyShareForm'),input=document.querySelector('#familyPartnerEmail'),button=document.querySelector('#familyShareButton'),user=familySync.user;if(!form||!input||!button)return;if(!user){form.hidden=false;input.disabled=true;button.disabled=true;return}const owner=data?.ownerUid===user.uid,members=(data?.memberEmails||[]).map(familyEmail),partner=members.find(email=>email!==familyEmail(user.email));form.hidden=Boolean(data&&!owner);input.disabled=false;button.disabled=false;if(owner){input.value=partner||'';button.textContent=partner?'Modifier le partage':'Activer le partage'}else{input.value='';button.textContent='Activer le partage'}}
     function applyFamilySnapshot(data){
@@ -427,12 +427,13 @@
       if(activeMealField&&ownEcho)return;
       familySync.applying=true;
       if(data.meals&&typeof data.meals==='object')meals=data.meals;
-      extras={...extras,recipes:Array.isArray(data.recipes)?data.recipes:extras.recipes,shopping:Array.isArray(data.shopping)?data.shopping:extras.shopping,reserves:Array.isArray(data.reserves)?data.reserves:extras.reserves,weekPlan:data.weekPlan&&typeof data.weekPlan==='object'?data.weekPlan:extras.weekPlan,mealDetails:data.mealDetails&&typeof data.mealDetails==='object'?data.mealDetails:extras.mealDetails};
+      extras={...extras,recipes:Array.isArray(data.recipes)?data.recipes:extras.recipes,recipeImports:data.recipeImports&&typeof data.recipeImports==='object'?data.recipeImports:(extras.recipeImports||{}),shopping:Array.isArray(data.shopping)?data.shopping:extras.shopping,reserves:Array.isArray(data.reserves)?data.reserves:extras.reserves,weekPlan:data.weekPlan&&typeof data.weekPlan==='object'?data.weekPlan:extras.weekPlan,mealDetails:data.mealDetails&&typeof data.mealDetails==='object'?data.mealDetails:extras.mealDetails,mealDeletions:Array.isArray(data.mealDeletions)?data.mealDeletions:(extras.mealDeletions||[])};
+      extras.mealDeletions.forEach(item=>{const key=String(item?.key||'');if(!key)return;delete extras.weekPlan[key];delete extras.mealDetails[key];delete meals[key]});
       localStorage.setItem(mealStorageKey,JSON.stringify(meals));localStorage.setItem(previewExtrasKey,JSON.stringify(extras));
       familyRevision=incomingRevision||Date.now();localStorage.setItem(familyRevisionKey,String(familyRevision));
       if(incomingRevision===familySync.pendingRevision)familySync.pendingRevision=0;
       renderMeals();renderExtras();renderAgenda();renderToday();familySync.applying=false;
-      importValidatedMealPlan20260904();if(data.ownerUid===familySync.user?.uid)installWeeklyMealPlanningReminder()
+      importPdfRecipes20260907();importValidatedMealPlan20260904();if(data.ownerUid===familySync.user?.uid)installWeeklyMealPlanningReminder()
     }
     function scheduleFamilySave(){
       if(!familySync.ready||familySync.applying||!familySync.user||!familySync.document||!familySync.setDocument)return;
@@ -504,11 +505,11 @@
             if(snapshot.exists()){
               const data=snapshot.data(),cloudRevision=Number(data.clientUpdatedAt)||0,activeMealField=document.activeElement?.closest?.('#mealWeekPlan input,#mealWeekPlan select');if(activeMealField&&cloudRevision&&cloudRevision===localRevision){cloudSync.ready=true;setSyncStatus('Synchronisé avec Google');return}if(localRevision>cloudRevision&&hasMeaningfulLocalData()){cloudSync.ready=true;setSyncStatus('Données de cet appareil protégées et synchronisées');scheduleCloudSave();return}writeSafetyBackup('avant-synchronisation-google');cloudSync.applying=true;
               if(data.goalsState&&Array.isArray(data.goalsState.themes)&&Array.isArray(data.goalsState.goals)){state=data.goalsState;[['Bien-être','Beauté'],['Travail & études','Alimentation'],['Maison','Sommeil'],['Pour moi','Sport']].forEach(([oldName,newName])=>{const theme=state.themes.find(x=>x.name===oldName);if(theme)theme.name=newName})}
-              if(!familySync.ready&&data.meals&&typeof data.meals==='object')meals=data.meals;if(data.organizer&&typeof data.organizer==='object'){organizer={tasks:[],appointments:[],purchases:[],sleep:{},...data.organizer};organizer.tasks||=[];organizer.appointments||=[];organizer.purchases||=[];organizer.sleep||={};organizer.calendarDeletions||=[];ensureWellbeing();localStorage.setItem(organizerKey,JSON.stringify(organizer));renderTasks();renderPurchases();renderAgenda();renderWellbeing();}if(data.extras&&typeof data.extras==='object'){const shared=familySync.ready?{recipes:extras.recipes,shopping:extras.shopping,reserves:extras.reserves,weekPlan:extras.weekPlan,mealDetails:extras.mealDetails}:null;extras={inbox:[],shopping:[],reserves:[],journal:[],favorites:[],...data.extras,...(shared||{})};extras.inbox||=[];extras.shopping||=[];extras.reserves||=[];extras.journal||=[];extras.favorites||=[];localStorage.setItem(previewExtrasKey,JSON.stringify(extras));renderExtras();}
+              if(!familySync.ready&&data.meals&&typeof data.meals==='object')meals=data.meals;if(data.organizer&&typeof data.organizer==='object'){organizer={tasks:[],appointments:[],purchases:[],sleep:{},...data.organizer};organizer.tasks||=[];organizer.appointments||=[];organizer.purchases||=[];organizer.sleep||={};organizer.calendarDeletions||=[];ensureWellbeing();localStorage.setItem(organizerKey,JSON.stringify(organizer));renderTasks();renderPurchases();renderAgenda();renderWellbeing();}if(data.extras&&typeof data.extras==='object'){const shared=familySync.ready?{recipes:extras.recipes,recipeImports:extras.recipeImports,shopping:extras.shopping,reserves:extras.reserves,weekPlan:extras.weekPlan,mealDetails:extras.mealDetails}:null;extras={inbox:[],shopping:[],reserves:[],journal:[],favorites:[],...data.extras,...(shared||{})};extras.inbox||=[];extras.shopping||=[];extras.reserves||=[];extras.journal||=[];extras.favorites||=[];localStorage.setItem(previewExtrasKey,JSON.stringify(extras));renderExtras();}
           
 
     localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));
-              localRevision=cloudRevision||localRevision||Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));renderControls();render();renderMeals();cloudSync.applying=false;cloudSync.ready=true;setSyncStatus('Synchronisé avec Google');
+              localRevision=cloudRevision||localRevision||Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));renderControls();render();renderMeals();cloudSync.applying=false;cloudSync.ready=true;setSyncStatus('Synchronisé avec Google');importPdfRecipes20260907();
             }else{cloudSync.ready=true;scheduleCloudSave()}
           },error=>{console.error(error);cloudSync.ready=false;setSyncStatus('Synchronisation refusée — vérifiez les règles Firestore')});
         });
@@ -642,7 +643,7 @@
     let journalYear=now.getFullYear(),journalMonth=now.getMonth();
     function renderJournalCalendar(){const calendar=document.querySelector('#journalCalendar');if(!calendar)return;document.querySelector('#journalMonthTitle').textContent=new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'}).format(new Date(journalYear,journalMonth,1));const first=new Date(journalYear,journalMonth,1),offset=(first.getDay()+6)%7,days=new Date(journalYear,journalMonth+1,0).getDate(),smile={good:'😊',mid:'😐',bad:'😔'},weekdays=['L','M','M','J','V','S','D'];calendar.innerHTML=weekdays.map(x=>'<div class="journal-weekday">'+x+'</div>').join('')+Array.from({length:offset},()=>'<div class="journal-day empty"></div>').join('')+Array.from({length:days},(_,index)=>{const day=index+1,date=dateKey(journalYear,journalMonth,day),entry=extras.journal.find(x=>x.date===date),sleep=organizer.sleep[date]||entry?.sleep||'',mood=entry?.mood||'',has=Boolean(entry||sleep),label=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(journalYear,journalMonth,day));return '<button type="button" class="journal-day '+(date===today?'today ':'')+(has?'has-entry':'')+'" data-journal-day="'+date+'" aria-label="'+escapeHtml(label)+(has?' — journée renseignée':' — renseigner la journée')+'"><span class="journal-day-number">'+day+'</span><span class="journal-day-signals">'+(sleep?'<span class="journal-signal"><span class="journal-signal-icon">☾</span>'+smile[sleep]+'</span>':'')+(mood?'<span class="journal-signal"><span class="journal-signal-icon">♡</span>'+smile[mood]+'</span>':'')+'</span></button>'}).join('')}
     const renderExtrasBase=renderExtras;renderExtras=()=>{renderExtrasBase();renderJournalCalendar()};
-    extras.recipes||=[];extras.weekPlan||={};extras.mealDetails||={};Object.keys(extras.weekPlan).forEach(key=>{if(extras.weekPlan[key]==='__leftovers')extras.weekPlan[key]='__text:Restes';if(extras.weekPlan[key]==='__free')extras.weekPlan[key]='__text:Repas libre / extérieur'});
+    extras.recipes||=[];extras.recipeImports||={};extras.weekPlan||={};extras.mealDetails||={};Object.keys(extras.weekPlan).forEach(key=>{if(extras.weekPlan[key]==='__leftovers')extras.weekPlan[key]='__text:Restes';if(extras.weekPlan[key]==='__free')extras.weekPlan[key]='__text:Repas libre / extérieur'});
     let mealPlanWeekOffset=0,editingRecipeId='',mealPastDaysExpanded=false;
     function mealPlanMonday(){const base=new Date(),monday=new Date(base);monday.setHours(12,0,0,0);monday.setDate(base.getDate()-((base.getDay()+6)%7)+(mealPlanWeekOffset*7));return monday}
     function mealPlanName(value){if(value==='__none')return 'Pas de repas à prévoir';if(value?.startsWith('__text:'))return value.slice(7);return extras.recipes.find(x=>x.id===value)?.name||''}
@@ -712,6 +713,132 @@
     function reserveStock(){const stock=new Map();(extras.reserves||[]).forEach(raw=>{const unit=reserveUnitData(raw.unit),key=reserveProductKey(raw)+'|'+unit.group,quantity=raw.quantity===''||raw.quantity==null?Infinity:shoppingNumber(raw.quantity)*unit.factor,current=stock.get(key)||0;stock.set(key,current===Infinity||quantity===Infinity?Infinity:current+quantity)});return stock}
     function ingredientMissingAfterReserves(item,stock){const unit=reserveUnitData(item.unit),key=reserveProductKey(item)+'|'+unit.group;if(!stock.has(key))return item;const available=stock.get(key),needed=shoppingNumber(item.quantity)*unit.factor;if(available===Infinity||available>=needed){if(available!==Infinity)stock.set(key,available-needed);return null}stock.set(key,0);return{...item,quantity:(needed-available)/unit.factor}}
     function addIngredientsToShopping(recipes){let added=0,merged=0,covered=0;const stock=reserveStock();recipes.forEach(recipe=>parseRecipeIngredients(recipe).forEach(item=>{const needed=ingredientMissingAfterReserves(item,stock);if(!needed){covered++;return}if(shoppingNumber(needed.quantity)<shoppingNumber(item.quantity))covered++;const result=addOrMergeShopping(needed,String(recipe.id));if(result==='added')added++;if(result==='merged')merged++}));consolidateShoppingItems();saveExtras();const parts=[];if(added)parts.push(added+' produit'+(added>1?'s':'')+' ajouté'+(added>1?'s':''));if(merged)parts.push(merged+' quantité'+(merged>1?'s':'')+' cumulée'+(merged>1?'s':''));if(covered)parts.push(covered+' couvert'+(covered>1?'s':'')+' par vos réserves');showToast(parts.join(' · ')||'La liste est déjà à jour')}
+    function importPdfRecipes20260907(){
+      const importId='pdf-recipes-2026-09-07-v1';extras.recipeImports=extras.recipeImports&&typeof extras.recipeImports==='object'?extras.recipeImports:{};if(extras.recipeImports[importId])return 0;
+      const recipes=[
+        {id:'pdf-20260907-risotto-tomates-courgettes',name:'Risotto aux tomates séchées et courgettes',type:'Plat',device:'Casserole',prepTime:10,cookTime:30,duration:40,servings:2,sourceServings:2,favorite:false,url:'',ingredients:`60 g riz complet;Épicerie
+60 g tomates séchées à l’huile égouttées;Épicerie
+1 pièce courgette moyenne;Fruits & légumes
+1 pièce oignon;Fruits & légumes
+1 pièce gousse d’ail;Fruits & légumes
+500 ml bouillon de légumes sans sel ajouté;Épicerie
+1 c. à café huile d’olive;Épicerie
+1 c. à soupe concentré de tomates;Épicerie
+1 pincée sel;Épicerie
+1 pincée poivre;Épicerie
+1 botte basilic ou origan frais;Fruits & légumes
+10 g parmesan râpé facultatif;Frais`,instructions:`Émincer l’oignon et l’ail.
+Faire revenir l’oignon dans l’huile d’olive à feu doux jusqu’à ce qu’il devienne translucide.
+Ajouter l’ail, puis les dés de courgette. Faire revenir 3 à 4 minutes.
+Ajouter le riz complet et mélanger 1 à 2 minutes jusqu’à ce qu’il devienne nacré.
+Verser le bouillon louche par louche, en remuant régulièrement, jusqu’à absorption.
+À mi-cuisson, après environ 15 minutes, ajouter le concentré de tomates et les tomates séchées coupées en lanières. Poursuivre jusqu’à ce que le risotto soit crémeux, soit 25 à 30 minutes de cuisson au total.
+Saler, poivrer et ajouter les herbes fraîches ciselées. Bien mélanger.
+Servir chaud avec le parmesan facultatif et un filet d’huile d’olive.`,notes:'Ajouter un filet de jus de citron avant de servir pour encore plus de fraîcheur.'},
+        {id:'pdf-20260907-poulet-courgettes-creme-parmesan',name:'Poulet aux courgettes à la crème et au parmesan',type:'Plat',device:'Poêle',prepTime:15,cookTime:20,duration:35,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`4 pièces filets de poulet;Frais
+3 pièces courgettes;Fruits & légumes
+20 cl crème fraîche;Frais
+50 g parmesan râpé;Frais
+1 pièce oignon;Fruits & légumes
+1 pièce gousse d’ail;Fruits & légumes
+1 c. à soupe huile d’olive;Épicerie
+1 pincée sel;Épicerie
+1 pincée poivre;Épicerie
+1 c. à café herbes de Provence facultatives;Épicerie`,instructions:`Couper les filets de poulet en morceaux.
+Émincer l’oignon et hacher l’ail.
+Couper les courgettes en rondelles ou en demi-lunes.
+Faire revenir l’oignon et l’ail avec l’huile d’olive.
+Ajouter le poulet et le faire dorer.
+Incorporer les courgettes, saler, poivrer et ajouter les herbes de Provence.
+Laisser cuire 5 à 7 minutes à feu moyen.
+Verser la crème fraîche et ajouter le parmesan.
+Bien mélanger et laisser mijoter 5 minutes à feu doux.
+Servir chaud, éventuellement avec du riz, des pâtes ou du quinoa.`,notes:'Pour varier, ajouter des tomates cerises ou des champignons. La crème peut être remplacée par du lait de coco.'},
+        {id:'pdf-20260907-risotto-asperges-petits-pois',name:'Risotto aux asperges et petits pois',type:'Plat',device:'Casserole',prepTime:15,cookTime:30,duration:45,servings:1,sourceServings:1,favorite:false,url:'',ingredients:`60 g riz complet;Épicerie
+100 g asperges vertes;Fruits & légumes
+60 g petits pois;Fruits & légumes
+0.5 pièce oignon;Fruits & légumes
+1 pièce gousse d’ail;Fruits & légumes
+1 c. à soupe huile d’olive;Épicerie
+500 ml bouillon de légumes;Épicerie
+1 c. à soupe fromage blanc 0 %;Frais
+1 pincée sel;Épicerie
+1 pincée poivre;Épicerie
+1 pièce citron pour le zeste;Fruits & légumes
+1 botte herbes fraîches;Fruits & légumes
+10 g parmesan râpé;Frais`,instructions:`Émincer l’oignon et hacher l’ail.
+Couper les asperges en tronçons en conservant les pointes, puis les faire revenir 3 minutes avec l’oignon et l’ail dans l’huile d’olive.
+Ajouter le riz complet et mélanger 1 à 2 minutes pour le nacrer.
+Verser le bouillon louche par louche, en remuant régulièrement, jusqu’à absorption.
+À mi-cuisson, après environ 15 minutes, ajouter les tronçons d’asperges et les petits pois.
+Poursuivre la cuisson 10 à 15 minutes jusqu’à ce que le riz soit tendre et crémeux.
+Hors du feu, ajouter le zeste de citron, le fromage blanc, le parmesan, le sel et le poivre, puis mélanger.
+Parsemer d’herbes fraîches et servir chaud.`,notes:'La quantité d’huile manifestement erronée dans le document source a été normalisée à une cuillère à soupe.'},
+        {id:'pdf-20260907-risotto-brocoli-citron',name:'Risotto au brocoli et au citron',type:'Plat',device:'Casserole',prepTime:15,cookTime:30,duration:45,servings:1,sourceServings:1,favorite:false,url:'',ingredients:`60 g riz complet;Épicerie
+150 g brocoli en fleurettes;Fruits & légumes
+0.5 pièce oignon;Fruits & légumes
+1 pièce gousse d’ail;Fruits & légumes
+1 c. à café huile d’olive;Épicerie
+500 ml bouillon de légumes sans sel ajouté;Épicerie
+0.5 pièce citron;Fruits & légumes
+1 pincée sel;Épicerie
+1 pincée poivre;Épicerie
+1 botte persil ou ciboulette;Fruits & légumes
+10 g parmesan râpé facultatif;Frais`,instructions:`Émincer l’oignon et hacher l’ail.
+Faire revenir l’oignon dans l’huile d’olive à feu doux jusqu’à ce qu’il devienne translucide.
+Ajouter l’ail et faire revenir 1 minute sans le colorer.
+Ajouter le riz complet et mélanger 1 à 2 minutes jusqu’à ce qu’il devienne nacré.
+Verser le bouillon peu à peu, en remuant régulièrement, jusqu’à absorption.
+À mi-cuisson, après environ 15 minutes, ajouter les fleurettes de brocoli et poursuivre la cuisson.
+Lorsque le riz est tendre et crémeux, après 25 à 30 minutes au total, ajouter le jus et le zeste du demi-citron.
+Parsemer d’herbes fraîches et de parmesan facultatif, puis servir chaud.`,notes:'La quantité d’huile ambiguë dans le document source a été normalisée à une cuillère à café.'},
+        {id:'pdf-20260907-boeuf-oignons',name:'Bœuf aux oignons',type:'Plat',device:'Poêle',prepTime:10,cookTime:15,duration:25,servings:2,sourceServings:2,favorite:false,url:'',ingredients:`400 g bavette ou rumsteck;Frais
+1.5 pièces oignons;Fruits & légumes
+1 pièce gousse d’ail;Fruits & légumes
+1 c. à soupe sauce soja salée;Épicerie
+1 c. à soupe sauce huître;Épicerie
+2 c. à soupe sauce yakitori;Épicerie
+4.5 c. à soupe sauce aigre-douce;Épicerie
+1 c. à soupe miel;Épicerie
+1 c. à café Maïzena;Épicerie
+4 c. à soupe sauce soja sucrée;Épicerie
+1 pièce œuf facultatif;Frais
+200 g riz;Épicerie`,instructions:`Couper la viande en fines lamelles.
+Préparer la marinade avec la sauce soja salée, la sauce huître, une cuillère de sauce yakitori, une cuillère de sauce aigre-douce, le miel et la Maïzena. Ajouter la viande et laisser mariner aussi longtemps que possible.
+Émincer les oignons et faire revenir avec l’ail dans une poêle jusqu’à ce qu’ils soient fondants.
+Ajouter la viande marinée aux oignons. Dès qu’elle commence à colorer, ajouter la sauce soja sucrée, le reste de sauce yakitori et le reste de sauce aigre-douce.
+Laisser cuire 5 minutes à feu moyen.
+Servir avec le riz et ajouter un œuf au plat si désiré.`,notes:'Plat rapide et savoureux. Ajuster la quantité de sauces selon vos préférences.'},
+        {id:'pdf-20260907-risotto-courgette-citron',name:'Risotto à la courgette et au citron',type:'Plat',device:'Casserole',prepTime:15,cookTime:30,duration:45,servings:1,sourceServings:1,favorite:false,url:'',ingredients:`60 g riz complet;Épicerie
+1 pièce courgette;Fruits & légumes
+0.5 pièce oignon;Fruits & légumes
+1 c. à soupe huile d’olive;Épicerie
+500 ml bouillon de légumes sans sel ajouté;Épicerie
+1 pièce citron;Fruits & légumes
+1 pincée sel;Épicerie
+1 pincée poivre;Épicerie
+1 botte basilic ou persil frais;Fruits & légumes
+20 g parmesan râpé;Frais`,instructions:`Émincer l’oignon et le faire revenir dans une casserole avec l’huile d’olive.
+Ajouter le riz complet et mélanger 1 à 2 minutes jusqu’à ce qu’il devienne translucide.
+Ajouter le bouillon louche par louche, en remuant régulièrement.
+Couper la courgette en petits dés et l’ajouter au riz après 15 minutes de cuisson.
+Poursuivre jusqu’à absorption complète du bouillon, soit environ 25 à 30 minutes de cuisson au total.
+Hors du feu, ajouter le zeste et le jus de citron, le parmesan, le sel et le poivre, puis mélanger.
+Parsemer d’herbes fraîches et servir chaud.`,notes:''},
+        {id:'pdf-20260907-risotto-courgettes-parmesan-one-pot',name:'Risotto crémeux de courgettes au parmesan façon one-pot',type:'Plat',device:'Thermomix TM7',prepTime:10,cookTime:30,duration:40,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`160 g riz à risotto Arborio;Épicerie
+1 pièce courgette râpée;Fruits & légumes
+1 pièce oignon;Fruits & légumes
+600 ml bouillon de légumes chaud;Épicerie
+30 g parmesan râpé;Frais
+1 c. à soupe huile d’olive;Épicerie`,instructions:`Mettre l’oignon coupé dans le bol et mixer 5 secondes, vitesse 5.
+Ajouter l’huile d’olive et rissoler 3 minutes à 120 °C, vitesse 1.
+Ajouter le riz et programmer 3 minutes à 120 °C, sens inverse, vitesse mijotage, afin de le nacrer.
+Ajouter la courgette râpée et le bouillon de légumes.
+Cuire 15 à 18 minutes à 100 °C, sens inverse, vitesse mijotage, sans le gobelet.
+Incorporer le parmesan et mélanger délicatement avant de servir.`,notes:''}
+      ];
+      let added=0;recipes.forEach(recipe=>{const hasId=extras.recipes.some(item=>sameId(item.id,recipe.id)),hasName=extras.recipes.some(item=>String(item.name||'').trim().toLocaleLowerCase('fr')===recipe.name.toLocaleLowerCase('fr'));if(!hasId&&!hasName){extras.recipes.push(recipe);added++}});extras.recipeImports[importId]=Date.now();localStorage.setItem(previewExtrasKey,JSON.stringify(extras));touchLocalRevision();renderExtras();scheduleCloudSave();scheduleFamilySave();if(added)showToast(added+' recettes ajoutées à votre bibliothèque');return added
+    }
     function importValidatedMealPlan20260904(){
       const importKey='repas-valides-2026-09-04-v1';if(localStorage.getItem(importKey))return;
       const recipes=[
@@ -832,7 +959,7 @@ Rectifier l’assaisonnement et servir le curry avec le riz.`,notes:'Prévoir un
     }
     function closeCookingRecipe(){activeCookingRecipeId='';document.querySelector('#recipeCookBackdrop').classList.remove('open');document.querySelector('#recipeCookSheet').classList.remove('open');document.body.style.overflow=''}
     document.querySelector('#recipeList').addEventListener('click',event=>{const id=event.target.closest('[data-recipe-cook]')?.dataset.recipeCook;if(id)openCookingRecipe(id)});document.querySelector('#recipeCookBackdrop').addEventListener('click',closeCookingRecipe);document.querySelector('#recipeCookClose').addEventListener('click',closeCookingRecipe);document.querySelector('#recipeCookContent').addEventListener('click',event=>{if(event.target.id!=='recipeCookGroceries')return;const recipe=extras.recipes.find(x=>String(x.id)===activeCookingRecipeId);if(recipe)addIngredientsToShopping([recipe])});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.querySelector('#recipeCookSheet').classList.contains('open'))closeCookingRecipe()});
-    function saveMealPlanSlot(key,value,rerender=true){if(value)extras.weekPlan[key]=value;else delete extras.weekPlan[key];const [date,type]=key.split(':'),label=mealPlanName(value);if(label)meals[date+':'+type]=label;else delete meals[date+':'+type];saveMeals();if(rerender)saveExtras();else{localStorage.setItem(previewExtrasKey,JSON.stringify(extras));touchLocalRevision();scheduleCloudSave();scheduleFamilySave()}}
+    function saveMealPlanSlot(key,value,rerender=true){extras.mealDeletions=Array.isArray(extras.mealDeletions)?extras.mealDeletions:[];if(value){extras.weekPlan[key]=value;extras.mealDeletions=extras.mealDeletions.filter(item=>String(item?.key)!==key)}else{delete extras.weekPlan[key];extras.mealDeletions=extras.mealDeletions.filter(item=>String(item?.key)!==key);extras.mealDeletions.push({key,deletedAt:Date.now()})}const [date,type]=key.split(':'),label=mealPlanName(value);if(label)meals[date+':'+type]=label;else delete meals[date+':'+type];saveMeals();if(rerender)saveExtras();else{localStorage.setItem(previewExtrasKey,JSON.stringify(extras));touchLocalRevision();scheduleCloudSave();scheduleFamilySave()}}
     document.querySelector('#mealWeekPlan').addEventListener('change',event=>{const select=event.target.closest('[data-meal-plan]');if(!select)return;const key=select.dataset.mealPlan;if(select.value==='__custom'){mealEditingSlots.add(key);saveMealPlanSlot(key,'__text:'+(extras.weekPlan[key]?.startsWith('__text:')?extras.weekPlan[key].slice(7):''));renderMealPlanner();requestAnimationFrame(()=>document.querySelector('[data-meal-plan-text="'+key+'"]')?.focus());return}delete extras.mealDetails[key];mealEditingSlots.delete(key);saveMealPlanSlot(key,select.value);renderMealPlanner()});
     document.querySelector('#mealWeekPlan').addEventListener('input',event=>{const course=event.target.closest('[data-meal-course]');if(course){const key=course.dataset.mealCourseKey,detail=extras.mealDetails[key]||{detailed:true,starter:'',main:'',dessert:''};detail.detailed=true;detail[course.dataset.mealCourse]=course.value;extras.mealDetails[key]=detail;const summary=mealDetailSummary(detail),[date,type]=key.split(':');extras.weekPlan[key]='__text:'+summary;if(summary)meals[date+':'+type]=summary;else delete meals[date+':'+type];localStorage.setItem(previewExtrasKey,JSON.stringify(extras));localStorage.setItem(mealStorageKey,JSON.stringify(meals));touchLocalRevision();const confirm=course.closest('.meal-slot')?.querySelector('[data-meal-choice-confirm]');if(confirm)confirm.textContent='Enregistrer ce repas';return}const input=event.target.closest('[data-meal-plan-text]');if(!input)return;const key=input.dataset.mealPlanText,value='__text:'+input.value,[date,type]=key.split(':');extras.weekPlan[key]=value;if(input.value.trim())meals[date+':'+type]=input.value;else delete meals[date+':'+type];localStorage.setItem(previewExtrasKey,JSON.stringify(extras));localStorage.setItem(mealStorageKey,JSON.stringify(meals));touchLocalRevision();const confirm=input.closest('.meal-slot')?.querySelector('[data-meal-choice-confirm]');if(confirm)confirm.textContent='Enregistrer ce repas'});
     document.querySelector('#mealWeekPlan').addEventListener('click',event=>{if(event.target.closest('[data-show-past-meals]')){mealPastDaysExpanded=true;renderMealPlanner();return}const edit=event.target.closest('[data-meal-edit-slot]');if(edit){const key=edit.dataset.mealEditSlot;mealEditingSlots.add(key);renderMealPlanner();requestAnimationFrame(()=>document.querySelector('[data-meal-plan="'+key+'"]')?.focus());return}const button=event.target.closest('[data-meal-detail-toggle]');if(!button)return;const key=button.dataset.mealDetailToggle,current=extras.mealDetails[key],currentText=extras.weekPlan[key]?.startsWith('__text:')?extras.weekPlan[key].slice(7):'';mealEditingSlots.add(key);if(current?.detailed){const summary=mealDetailSummary(current);delete extras.mealDetails[key];saveMealPlanSlot(key,'__text:'+summary);renderMealPlanner();requestAnimationFrame(()=>document.querySelector('[data-meal-plan-text="'+key+'"]')?.focus())}else{extras.mealDetails[key]={detailed:true,starter:'',main:currentText,dessert:''};saveMealPlanSlot(key,'__text:'+currentText);renderMealPlanner();requestAnimationFrame(()=>document.querySelector('[data-meal-course-key="'+key+'"][data-meal-course="main"]')?.focus())}});
@@ -930,7 +1057,7 @@ Rectifier l’assaisonnement et servir le curry avec le riz.`,notes:'Prévoir un
     document.querySelector('#panelMeals').addEventListener('click',event=>{const key=event.target.closest('[data-meal-jump]')?.dataset.mealJump;if(!key)return;document.querySelector('[data-meal-plan="'+key+':lunch"]')?.closest('.meal-plan-day')?.scrollIntoView({behavior:'smooth',block:'center'})});
     document.querySelector('#mealWeekPlan').addEventListener('click',event=>{const edit=event.target.closest('[data-meal-edit-slot]');if(edit&&!mealChoiceOriginals.has(edit.dataset.mealEditSlot))mealChoiceOriginals.set(edit.dataset.mealEditSlot,extras.weekPlan[edit.dataset.mealEditSlot]||'');const cancel=event.target.closest('[data-meal-choice-cancel]'),confirmChoice=event.target.closest('[data-meal-choice-confirm]');if(cancel){event.preventDefault();event.stopImmediatePropagation();const key=cancel.dataset.mealChoiceCancel,original=mealChoiceOriginals.has(key)?mealChoiceOriginals.get(key):extras.weekPlan[key]||'';mealChoiceDrafts.delete(key);mealChoiceOriginals.delete(key);mealEditingSlots.delete(key);if((extras.weekPlan[key]||'')!==original)saveMealPlanSlot(key,original);else renderMealPlanner();return}if(confirmChoice){event.preventDefault();event.stopImmediatePropagation();const key=confirmChoice.dataset.mealChoiceConfirm,select=document.querySelector('[data-meal-plan="'+key+'"]'),value=mealChoiceDrafts.has(key)?mealChoiceDrafts.get(key):select?.value||extras.weekPlan[key]||'';mealChoiceDrafts.delete(key);mealChoiceOriginals.delete(key);mealEditingSlots.delete(key);if(value==='__custom'){const customValue=extras.weekPlan[key]||'__text:';saveMealPlanSlot(key,customValue);renderMealPlanner();showToast('Repas enregistré');return}delete extras.mealDetails[key];saveMealPlanSlot(key,value);showToast('Repas validé')}},true);
     document.querySelector('#mealWeekPlan').addEventListener('change',event=>{const select=event.target.closest('[data-meal-plan]');if(!select||select.value==='__custom')return;event.preventDefault();event.stopImmediatePropagation();const key=select.dataset.mealPlan;mealChoiceDrafts.set(key,select.value);mealEditingSlots.add(key);const original=mealChoiceOriginals.get(key)??extras.weekPlan[key]??'',button=select.closest('.meal-slot')?.querySelector('[data-meal-choice-confirm]');if(button)button.textContent=select.value===original?'Conserver ce repas':'Valider ce choix'},true);
-    document.querySelector('#mealWeekPlan').addEventListener('click',event=>{const button=event.target.closest('[data-meal-remove-slot]');if(!button)return;event.preventDefault();event.stopImmediatePropagation();const key=button.dataset.mealRemoveSlot;if(!confirm('Supprimer ce repas du planning ?'))return;mealChoiceDrafts.delete(key);mealChoiceOriginals.delete(key);delete extras.mealDetails[key];mealEditingSlots.delete(key);saveMealPlanSlot(key,'');renderMealPlanner();showToast('Repas supprimé')},true);
+    document.querySelector('#mealWeekPlan').addEventListener('click',event=>{const button=event.target.closest('[data-meal-remove-slot]');if(!button)return;event.preventDefault();event.stopImmediatePropagation();const key=button.dataset.mealRemoveSlot;button.disabled=true;mealChoiceDrafts.delete(key);mealChoiceOriginals.delete(key);delete extras.mealDetails[key];mealEditingSlots.delete(key);saveMealPlanSlot(key,'');showToast('Repas supprimé sur le planning partagé')},true);
     function contextualAdd(event){event.preventDefault();event.stopImmediatePropagation();const active=document.body.dataset.activeTab||document.querySelector('.tab[aria-selected="true"]')?.dataset.tab,quick={agenda:'appointment',meals:'meal'},forms={goals:'composer',shopping:'shoppingForm',journal:'journalForm'};document.body.dataset.activeTab=active||'agenda';if(active==='recipes'){resetRecipeForm();document.querySelector('#recipeForm').hidden=false;document.querySelector('#toggleRecipeForm').textContent='− Fermer';if(window.matchMedia('(max-width:850px)').matches)document.body.style.overflow='hidden';document.querySelector('#recipeName').focus();return}if(active==='purchases'){resetPurchaseForm();openPurchaseSheet();return}if(active==='todos'){resetTaskForm();openTaskSheet();return}if(quick[active]){if(active==='agenda')editingAppointmentId='';openQuickSheet(quick[active])}else if(forms[active])openMobileForm(forms[active]);else openQuickSheet('appointment')}
     document.querySelector('#floatingAdd').addEventListener('click',contextualAdd,true);
     const activeTabObserver=new MutationObserver(()=>{const active=document.querySelector('.tab[aria-selected="true"]')?.dataset.tab;if(active)document.body.dataset.activeTab=active});activeTabObserver.observe(document.querySelector('.tabs'),{subtree:true,attributes:true,attributeFilter:['aria-selected']});document.body.dataset.activeTab=document.querySelector('.tab[aria-selected="true"]')?.dataset.tab||'agenda';
@@ -948,7 +1075,7 @@ Rectifier l’assaisonnement et servir le curry avec le riz.`,notes:'Prévoir un
     setTimeout(()=>{const status=document.querySelector('#syncStatus'),backup=readSafetyBackup();if(status.textContent.startsWith('Connecté :'))setSyncStatus(backup&&snapshotScore(backup)>0?'Google ne répond pas — utilisez la sauvegarde locale proposée':'Google ne répond pas — données locales conservées')},12000);
     const recipeUrlInput=document.querySelector('#recipeUrl');if(recipeUrlInput){const recipeUrlLabel=recipeUrlInput.closest('label');recipeUrlLabel.childNodes[0].textContent='Lien vers la recette (facultatif)';recipeUrlInput.type='text';recipeUrlInput.inputMode='url';recipeUrlInput.autocomplete='url';recipeUrlInput.setAttribute('autocapitalize','none');recipeUrlInput.setAttribute('autocorrect','off');recipeUrlInput.spellcheck=false;recipeUrlInput.placeholder='Collez le lien de la recette';const recipeUrlRow=document.createElement('div');recipeUrlRow.className='purchase-url-row';recipeUrlInput.before(recipeUrlRow);recipeUrlRow.appendChild(recipeUrlInput);const recipePasteUrl=document.createElement('button');recipePasteUrl.type='button';recipePasteUrl.className='secondary purchase-paste-url';recipePasteUrl.textContent='Coller';recipeUrlRow.appendChild(recipePasteUrl);recipePasteUrl.addEventListener('click',async()=>{try{const text=await navigator.clipboard.readText();if(!text)throw new Error('empty');recipeUrlInput.value=text.trim();recipeUrlInput.focus();showToast('Lien de recette collé')}catch{recipeUrlInput.focus();showToast('Appuyez longuement dans le champ puis choisissez Coller')}});const recipeUrlHint=document.createElement('span');recipeUrlHint.className='hint';recipeUrlHint.textContent='Ce lien reste facultatif.';recipeUrlLabel.appendChild(recipeUrlHint)}
     document.querySelector('#tabGoals').textContent='Bien-être';
-    localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));if(!localRevision&&hasMeaningfulLocalData()){localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('initialisation-protection')}if(snapshotScore(safetySnapshot())>0)writeBackupHistory('startup');renderControls();render();renderMeals();renderToday();setQuickType('appointment');openShortcutRoute();setupFirebase();
+    localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));importPdfRecipes20260907();if(!localRevision&&hasMeaningfulLocalData()){localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('initialisation-protection')}if(snapshotScore(safetySnapshot())>0)writeBackupHistory('startup');renderControls();render();renderMeals();renderToday();setQuickType('appointment');openShortcutRoute();setupFirebase();
   </script>
 </body>
 </html>
