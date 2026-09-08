@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v69 : menus validés du 11 au 17 septembre, recettes et courses -->
+<!-- Version v70 : correction des recettes du week-end des 12 et 13 septembre -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -921,7 +921,7 @@ Rectifier l’assaisonnement et servir le curry avec le riz.`,notes:'Prévoir un
       localStorage.setItem(importKey,'1');localStorage.setItem(mealStorageKey,JSON.stringify(meals));localStorage.setItem(previewExtrasKey,JSON.stringify(extras));touchLocalRevision();renderMeals();renderExtras();renderAgenda();renderToday();scheduleCloudSave();scheduleFamilySave();showToast('Planning, recettes et courses importés');
     }
     function importValidatedMealPlan20260911(){
-      const importKey='repas-valides-2026-09-11-v1';extras.menuImports=extras.menuImports&&typeof extras.menuImports==='object'?extras.menuImports:{};const alreadyImported=Boolean(extras.menuImports[importKey]),recipes=[
+      const importKey='repas-valides-2026-09-11-v2';extras.menuImports=extras.menuImports&&typeof extras.menuImports==='object'?extras.menuImports:{};const alreadyImported=Boolean(extras.menuImports[importKey]),recipes=[
         {id:'plan-20260911-tartes-fines',name:'Tartes fines aux poivrons, lardons et chèvre, salade',type:'Plat',device:'Air Fryer',prepTime:12,cookTime:15,duration:27,servings:3,sourceServings:3,favorite:false,url:'',ingredients:`1 pièce pâte feuilletée;Frais
 150 g lardons;Frais
 150 g poivrons coupés en morceaux;Fruits & légumes
@@ -953,6 +953,35 @@ Préparer la semoule avec de l’eau chaude selon les indications du paquet, pui
 Mettre la farine, le beurre coupé en morceaux et le sucre dans le bol du Thermomix, puis mélanger 10 secondes, vitesse 6.
 Répartir la pâte à crumble sur les framboises.
 Cuire 18 à 22 minutes à 170 °C, jusqu’à ce que le dessus soit doré et les fruits bouillonnants.`,notes:'Dessert du déjeuner Jovic.'},
+        {id:'plan-20260905-veloute',name:'Velouté de tomates et lentilles corail, tartines de chèvre',type:'Plat',device:'Thermomix TM7',prepTime:10,cookTime:20,duration:30,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`800 g tomates;Fruits & légumes
+1 pièce oignon;Fruits & légumes
+150 g lentilles corail;Épicerie
+700 ml eau;Épicerie
+1 pièce cube de bouillon de légumes;Épicerie
+8 tranches pain de campagne;Épicerie
+120 g fromage de chèvre;Frais`,instructions:`Couper l’oignon en deux, le placer dans le bol et hacher 5 secondes, vitesse 5.
+Ajouter les tomates coupées, les lentilles corail, l’eau et le cube de bouillon.
+Cuire 20 minutes à 100 °C, vitesse 1.
+Mixer progressivement 1 minute de la vitesse 5 à la vitesse 9.
+Rectifier l’assaisonnement et ajouter un peu d’eau si le velouté est trop épais.
+Faire griller le pain, répartir le chèvre dessus et servir avec le velouté.`,notes:'Prévoir du sel et du poivre du placard. Pour une texture plus douce, ajouter une cuillère de crème déjà disponible.'},
+        {id:'pdf-20260907-boeuf-oignons',name:'Bœuf aux oignons',type:'Plat',device:'Poêle',prepTime:10,cookTime:15,duration:25,servings:2,sourceServings:2,favorite:false,url:'',ingredients:`400 g bavette ou rumsteck;Frais
+1.5 pièces oignons;Fruits & légumes
+1 pièce gousse d’ail;Fruits & légumes
+1 c. à soupe sauce soja salée;Épicerie
+1 c. à soupe sauce huître;Épicerie
+2 c. à soupe sauce yakitori;Épicerie
+4.5 c. à soupe sauce aigre-douce;Épicerie
+1 c. à soupe miel;Épicerie
+1 c. à café Maïzena;Épicerie
+4 c. à soupe sauce soja sucrée;Épicerie
+1 pièce œuf facultatif;Frais
+200 g riz;Épicerie`,instructions:`Couper la viande en fines lamelles.
+Préparer la marinade avec la sauce soja salée, la sauce huître, une cuillère de sauce yakitori, une cuillère de sauce aigre-douce, le miel et la Maïzena. Ajouter la viande et laisser mariner aussi longtemps que possible.
+Émincer les oignons et faire revenir avec l’ail dans une poêle jusqu’à ce qu’ils soient fondants.
+Ajouter la viande marinée aux oignons. Dès qu’elle commence à colorer, ajouter la sauce soja sucrée, le reste de sauce yakitori et le reste de sauce aigre-douce.
+Laisser cuire 5 minutes à feu moyen.
+Servir avec le riz et ajouter un œuf au plat si désiré.`,notes:'Plat rapide et savoureux. Ajuster la quantité de sauces selon vos préférences.'},
         {id:'plan-20260913-poisson-pane',name:'Poisson pané et frites à l’Airfryer, salade de tomates',type:'Plat',device:'Air Fryer',prepTime:8,cookTime:18,duration:26,servings:2,sourceServings:2,favorite:false,url:'',ingredients:`2 pièces poisson pané;Frais
 500 g pommes de terre frites;Épicerie
 300 g tomates;Fruits & légumes
@@ -999,9 +1028,9 @@ Servir le curry avec le riz.`,notes:''}
         '2026-09-16:dinner':{recipe:'plan-20260916-curry-crevettes',people:2},
         '2026-09-17:dinner':{recipe:'plan-20260906-frittata',people:2}
       };
-      let changed=false;recipes.forEach(recipe=>{const index=extras.recipes.findIndex(item=>sameId(item.id,recipe.id));if(index<0){extras.recipes.push(recipe);changed=true}});
-      extras.mealDeletions=Array.isArray(extras.mealDeletions)?extras.mealDeletions:[];Object.entries(slots).forEach(([key,item])=>{const deleted=extras.mealDeletions.some(entry=>String(entry?.key)===key);if(!extras.weekPlan[key]&&!deleted){extras.weekPlan[key]=item.recipe;changed=true}if(!extras.mealDetails[key]){extras.mealDetails[key]={people:item.people,...(item.main?{main:item.main}:{}),...(item.dessert?{dessert:item.dessert}:{}),...(item.extraRecipeIds?{extraRecipeIds:item.extraRecipeIds}:{}),...(item.shoppingIngredients?{shoppingIngredients:item.shoppingIngredients}:{})};changed=true}const recipe=extras.recipes.find(entry=>sameId(entry.id,extras.weekPlan[key]));if(recipe&&!meals[key]){meals[key]=recipe.name;changed=true}});
-      if(!alreadyImported){extras.menuImports[importKey]=Date.now();const dates=new Set(Object.keys(slots).map(key=>key.split(':')[0]));addIngredientsToShopping(plannedShoppingRecipes(dates));changed=true}
+      let changed=false;recipes.forEach(recipe=>{const index=extras.recipes.findIndex(item=>sameId(item.id,recipe.id));if(index<0){extras.recipes.push(recipe);changed=true}else if(!alreadyImported){extras.recipes[index]={...extras.recipes[index],...recipe};changed=true}});
+      extras.mealDeletions=Array.isArray(extras.mealDeletions)?extras.mealDeletions:[];Object.entries(slots).forEach(([key,item])=>{const deleted=extras.mealDeletions.some(entry=>String(entry?.key)===key),detail={people:item.people,...(item.main?{main:item.main}:{}),...(item.dessert?{dessert:item.dessert}:{}),...(item.extraRecipeIds?{extraRecipeIds:item.extraRecipeIds}:{}),...(item.shoppingIngredients?{shoppingIngredients:item.shoppingIngredients}:{})};if(!alreadyImported){extras.mealDeletions=extras.mealDeletions.filter(entry=>String(entry?.key)!==key);extras.weekPlan[key]=item.recipe;extras.mealDetails[key]=detail;const recipe=extras.recipes.find(entry=>sameId(entry.id,item.recipe));if(recipe)meals[key]=recipe.name;else delete meals[key];changed=true;return}if(!extras.weekPlan[key]&&!deleted){extras.weekPlan[key]=item.recipe;changed=true}if(!extras.mealDetails[key]&&!deleted){extras.mealDetails[key]=detail;changed=true}const recipe=extras.recipes.find(entry=>sameId(entry.id,extras.weekPlan[key]));if(recipe&&!meals[key]){meals[key]=recipe.name;changed=true}});
+      if(!alreadyImported){extras.menuImports[importKey]=Date.now();const dates=new Set(Object.keys(slots).map(key=>key.split(':')[0]));extras.shopping=extras.shopping.map(raw=>{const item=normalizeShoppingItem(raw),sources={...(item.recipeSources||{})};let removed=0;Object.entries(sources).forEach(([source,quantity])=>{const match=source.match(/^menu:(\d{4}-\d{2}-\d{2}):(?:lunch|dinner):/);if(match&&dates.has(match[1])){removed+=Number(quantity)||0;delete sources[source]}});if(!removed)return raw;const quantity=Number(item.quantity||0)-removed;return quantity>.009?{...item,quantity,recipeSources:sources}:null}).filter(Boolean);addIngredientsToShopping(plannedShoppingRecipes(dates));changed=true}
       if(changed){localStorage.setItem(mealStorageKey,JSON.stringify(meals));localStorage.setItem(previewExtrasKey,JSON.stringify(extras));touchLocalRevision();renderMeals();renderExtras();renderAgenda();renderToday();scheduleCloudSave();scheduleFamilySave()}if(!alreadyImported)showToast('Menus, recettes et courses du 11 au 17 septembre importés');
     }
     function shoppingListText(){const pending=extras.shopping.filter(x=>!x.done).map(normalizeShoppingItem),groups=new Map();pending.forEach(x=>{if(!groups.has(x.category))groups.set(x.category,[]);groups.get(x.category).push(shoppingQuantityLabel(x,true))});return 'Liste de courses\n\n'+[...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([category,items])=>category+'\n'+items.map(x=>'• '+x).join('\n')).join('\n\n')}
