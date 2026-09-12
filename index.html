@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v76 : catégories élégantes et actions des recettes en bas -->
+<!-- Version v77 : import sécurisé de 9 nouvelles recettes -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -494,7 +494,7 @@
       familyRevision=incomingRevision||Date.now();localStorage.setItem(familyRevisionKey,String(familyRevision));
       if(incomingRevision===familySync.pendingRevision)familySync.pendingRevision=0;
       renderMeals();renderExtras();renderAgenda();renderToday();familySync.applying=false;
-      importPdfRecipes20260907();importValidatedMealPlan20260904();importValidatedMealPlan20260911();if(data.ownerUid===familySync.user?.uid)installWeeklyMealPlanningReminder()
+      importPdfRecipes20260907();importPdfRecipes20260912();importValidatedMealPlan20260904();importValidatedMealPlan20260911();if(data.ownerUid===familySync.user?.uid)installWeeklyMealPlanningReminder()
     }
     function scheduleFamilySave(){
       if(!familySync.ready||familySync.applying||!familySync.user||!familySync.document||!familySync.setDocument)return;
@@ -570,7 +570,7 @@
           
 
     localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));
-              localRevision=cloudRevision||localRevision||Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));renderControls();render();renderMeals();cloudSync.applying=false;cloudSync.ready=true;setSyncStatus('Synchronisé avec Google');importPdfRecipes20260907();importValidatedMealPlan20260911();
+              localRevision=cloudRevision||localRevision||Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));renderControls();render();renderMeals();cloudSync.applying=false;cloudSync.ready=true;setSyncStatus('Synchronisé avec Google');importPdfRecipes20260907();importPdfRecipes20260912();importValidatedMealPlan20260911();
             }else{cloudSync.ready=true;scheduleCloudSave()}
           },error=>{console.error(error);cloudSync.ready=false;setSyncStatus('Synchronisation refusée — vérifiez les règles Firestore')});
         });
@@ -907,6 +907,122 @@ Cuire 15 à 18 minutes à 100 °C, sens inverse, vitesse mijotage, sans le gobel
 Incorporer le parmesan et mélanger délicatement avant de servir.`,notes:''}
       ];
       let added=0;recipes.forEach(recipe=>{const hasId=extras.recipes.some(item=>sameId(item.id,recipe.id)),hasName=extras.recipes.some(item=>String(item.name||'').trim().toLocaleLowerCase('fr')===recipe.name.toLocaleLowerCase('fr'));if(!hasId&&!hasName){extras.recipes.push(recipe);added++}});if(added||!alreadyMarked){extras.recipeImports[importId]=Date.now();localStorage.setItem(previewExtrasKey,JSON.stringify(extras));touchLocalRevision();renderExtras();scheduleCloudSave();scheduleFamilySave()}if(added)showToast(added+' recettes ajoutées à votre bibliothèque');return added
+    }
+    function importPdfRecipes20260912(){
+      const importId='pdf-recipes-2026-09-12-v1';extras.recipeImports=extras.recipeImports&&typeof extras.recipeImports==='object'?extras.recipeImports:{};const alreadyMarked=Boolean(extras.recipeImports[importId]);
+      const recipes=[
+        {id:'pdf-20260912-riz-feta-tomates',name:'Riz à la feta et aux tomates',type:'Plat',device:'Four',prepTime:10,cookTime:35,duration:45,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`150 g riz;Épicerie
+1 pièce poireau;Fruits & légumes
+1 pièce tomates cerises;Fruits & légumes
+150 g feta;Frais
+0.5 pièce poivron rouge;Fruits & légumes
+300 ml bouillon;Épicerie
+200 ml sauce tomate;Épicerie`,instructions:`Préchauffer le four à 200 °C.
+Dans un plat allant au four, mélanger le riz, le poireau, les tomates cerises, la feta et le poivron rouge.
+Verser le bouillon et la sauce tomate sur le mélange.
+Enfourner pendant 35 minutes.
+À la sortie du four, bien mélanger avant de servir.`,notes:'Un plat parfait pour un repas rapide et savoureux. La quantité de tomates cerises est indiquée comme « 1 pièce » dans le document source et reste à préciser.'},
+        {id:'pdf-20260912-pates-ricotta-courgette-citron',name:'Pâtes à la ricotta, courgettes et tomates au citron',type:'Plat',device:'Four',prepTime:15,cookTime:25,duration:40,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`1 pièce ricotta;Frais
+150 g pâtes;Épicerie
+1 pièce courgette;Fruits & légumes
+1 pièce tomates cerises;Fruits & légumes
+1 pièce citron;Fruits & légumes
+400 ml bouillon de légumes;Épicerie
+50 g parmesan;Frais`,instructions:`Préchauffer le four à 180 °C.
+Dans un plat allant au four, ajouter les pâtes, la ricotta, la courgette coupée en morceaux, les tomates cerises, le zeste du citron et le bouillon de légumes.
+Ajouter le jus du citron.
+Couvrir le plat et enfourner pendant 25 minutes.
+À la sortie du four, ajouter le parmesan râpé avant de servir.`,notes:'Un plat parfait pour l’été, facile à préparer et plein de saveurs fraîches. Les conditionnements de la ricotta et des tomates cerises sont indiqués comme « 1 pièce » dans le document source et restent à préciser.'},
+        {id:'pdf-20260912-poulet-poivrons',name:'Poulet aux poivrons',type:'Plat',device:'Cuisson à la poêle',prepTime:10,cookTime:25,duration:35,servings:2,sourceServings:2,favorite:false,url:'',ingredients:`400 g blanc de poulet;Frais
+2 pièces poivrons rouges;Fruits & légumes
+3 pièces gousses d’ail;Fruits & légumes
+20 cl lait écrémé;Frais
+40 g Saint-Môret à 8 % de matière grasse;Frais
+40 g parmesan râpé;Frais
+0.5 pièce citron;Fruits & légumes
+90 g riz basmati cru;Épicerie
+1 pincée sel;Épicerie
+1 pincée poivre;Épicerie
+1 c. à soupe huile d’olive;Épicerie`,instructions:`Assaisonner le poulet avec du sel, puis le cuire à la poêle à feu moyen pendant 5 minutes de chaque côté. Le réserver.
+Couper les poivrons en cubes et les faire suer avec l’ail haché pendant 5 minutes à feu moyen.
+Ajouter le lait, le fromage frais, le jus de citron et le parmesan, puis mélanger.
+Remettre le poulet et laisser réduire à feu doux pendant quelques minutes.
+Servir avec le riz basmati.`,notes:'Un plat savoureux et équilibré, parfait pour un dîner en semaine.'},
+        {id:'pdf-20260912-coquillettes-jambon-comte-petits-pois',name:'Coquillettes au jambon, comté et petits pois',type:'Plat',device:'Four',prepTime:20,cookTime:30,duration:50,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`200 g coquillettes;Épicerie
+50 g petits pois;Fruits & légumes
+50 g champignons frais ou décongelés;Fruits & légumes
+75 g jambon;Frais
+3 pièces comté râpé;Frais
+25 cl crème liquide;Frais
+200 ml bouillon de légumes;Épicerie`,instructions:`Préchauffer le four à 200 °C.
+Dans un plat, mélanger les coquillettes, le jambon, les petits pois et les champignons.
+Ajouter le comté râpé, puis verser le bouillon de légumes et la crème liquide.
+Enfourner pendant 30 minutes à 200 °C.
+À la sortie du four, bien mélanger pour obtenir un plat crémeux.`,notes:'Les champignons peuvent être utilisés frais ou décongelés. Un plat idéal pour les soirées fraîches. La quantité de comté est indiquée comme « 3 pièces » dans le document source et reste à préciser.'},
+        {id:'pdf-20260912-orzo-crevettes-courgette-curry-coco',name:'Orzo aux crevettes, courgette, curry et coco',type:'Plat',device:'Cuisson à la poêle',prepTime:10,cookTime:12,duration:22,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`300 g orzo;Épicerie
+1 pièce courgette;Fruits & légumes
+200 g champignons frais;Fruits & légumes
+200 g crevettes;Frais
+2 c. à soupe curry;Épicerie
+1 pincée sel;Épicerie
+1 pincée poivre;Épicerie
+1 trait huile d’olive;Épicerie
+500 ml bouillon de légumes;Épicerie
+100 ml lait de coco;Épicerie`,instructions:`Couper la courgette en rondelles.
+Dans une grande poêle, disposer l’orzo, les rondelles de courgette, les champignons et les crevettes.
+Assaisonner avec un filet d’huile d’olive, le curry, le sel et le poivre.
+Ajouter le bouillon de légumes et le lait de coco.
+Couvrir et cuire à feu moyen pendant 10 à 12 minutes en mélangeant régulièrement pour éviter que l’orzo n’accroche.`,notes:'Un plat simple et rapide à préparer, idéal pour un dîner savoureux.'},
+        {id:'pdf-20260912-poulet-miel-pommes-terre',name:'Poulet au miel et pommes de terre au four',type:'Plat',device:'Four',prepTime:30,cookTime:40,duration:70,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`500 g poulet;Frais
+800 g pommes de terre;Fruits & légumes
+3 pièces carottes;Fruits & légumes
+1 pièce oignon;Fruits & légumes
+3 pièces gousses d’ail;Fruits & légumes
+2 c. à soupe miel;Épicerie
+2 c. à soupe huile d’olive;Épicerie
+1 c. à café paprika;Épicerie
+1 pincée sel;Épicerie
+1 pincée poivre;Épicerie`,instructions:`Préchauffer le four à 200 °C.
+Couper les pommes de terre, les carottes et l’oignon.
+Mélanger le miel, l’huile d’olive, le paprika, le sel et le poivre.
+Ajouter le poulet et les légumes, puis bien mélanger.
+Disposer le tout dans un plat allant au four.
+Enfourner pendant 35 à 40 minutes, jusqu’à obtenir une belle coloration dorée.`,notes:''},
+        {id:'pdf-20260912-one-pot-poulet-orzo-curry',name:'One pot poulet et orzo au curry',type:'Plat',device:'Casserole',prepTime:10,cookTime:20,duration:30,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`1 tasse orzo;Épicerie
+2 pièces blancs de poireaux;Fruits & légumes
+1 pièce carotte;Fruits & légumes
+500 g poulet;Frais
+1.5 tasses bouillon de légumes;Épicerie
+200 ml lait de coco;Épicerie
+1.5 c. à café curry;Épicerie
+0.5 c. à café ail;Épicerie
+1 pincée poivre;Épicerie`,instructions:`Couper finement les blancs de poireaux et la carotte.
+Dans une grande casserole, ajouter l’orzo, les poireaux, la carotte, le poulet, le bouillon de légumes et le lait de coco.
+Assaisonner avec le curry, l’ail et le poivre, puis bien mélanger.
+Couvrir et cuire à feu moyen jusqu’à ce que l’orzo soit tendre et le poulet bien cuit.`,notes:'Le bouillon étant déjà salé, il n’est pas nécessaire d’ajouter du sel. Ce plat est adapté aux enfants.'},
+        {id:'pdf-20260912-legumes-rotis-ail-herbes',name:'Légumes rôtis à l’ail et aux herbes',type:'Plat',device:'Four',prepTime:25,cookTime:30,duration:55,servings:4,sourceServings:4,favorite:false,url:'',ingredients:`4 tasses pommes de terre;Fruits & légumes
+2 tasses carottes;Fruits & légumes
+2 tasses courgettes coupées;Fruits & légumes
+3 c. à soupe huile d’olive;Épicerie
+3 pièces gousses d’ail hachées;Fruits & légumes
+1 c. à soupe romarin séché;Épicerie
+1 c. à soupe thym séché;Épicerie
+1 pincée sel et poivre;Épicerie`,instructions:`Préchauffer le four à 200 °C.
+Dans un grand saladier, réunir les pommes de terre, les carottes et les courgettes. Ajouter l’huile d’olive, l’ail, le romarin et le thym, puis saler et poivrer. Mélanger soigneusement.
+Répartir les légumes en une seule couche sur une plaque de cuisson.
+Enfourner pendant 25 à 30 minutes. Remuer à mi-cuisson pour obtenir une coloration homogène.
+Servir immédiatement, bien chaud.`,notes:'Un accompagnement sain et gourmand qui s’accorde avec de nombreux plats.'},
+        {id:'pdf-20260912-one-pot-orzo-courgette-tomates-chorizo',name:'One pot orzo, courgette, tomates et chorizo',type:'Plat',device:'Four',prepTime:5,cookTime:30,duration:35,servings:3,sourceServings:3,favorite:false,url:'',ingredients:`150 g orzo;Épicerie
+5 pièces tomates;Fruits & légumes
+0.5 pièce courgette;Fruits & légumes
+0.5 pièce chorizo;Frais
+20 cl crème liquide;Frais
+300 ml bouillon de légumes;Épicerie
+1 g parmesan râpé;Frais`,instructions:`Dans un plat allant au four, mélanger tous les ingrédients sauf le parmesan râpé.
+Enfourner pendant 30 minutes à 200 °C.
+À la sortie du four, ajouter le parmesan râpé, mélanger et servir.`,notes:'Un plat parfait pour l’été, rapide et facile à préparer. La quantité de parmesan est indiquée comme « 1 g » dans le document source et reste à préciser.'}
+      ];
+      let added=0;recipes.forEach(recipe=>{const hasId=extras.recipes.some(item=>sameId(item.id,recipe.id)),hasName=extras.recipes.some(item=>String(item.name||'').trim().toLocaleLowerCase('fr')===recipe.name.toLocaleLowerCase('fr'));if(!hasId&&!hasName){extras.recipes.push(recipe);added++}});if(added||!alreadyMarked){extras.recipeImports[importId]=Date.now();localStorage.setItem(previewExtrasKey,JSON.stringify(extras));touchLocalRevision();renderExtras();scheduleCloudSave();scheduleFamilySave()}if(added)showToast(added+' nouvelles recettes ajoutées à votre bibliothèque');return added
     }
     function importValidatedMealPlan20260904(){
       const importKey='repas-valides-2026-09-04-v1';if(localStorage.getItem(importKey))return;
@@ -1308,7 +1424,7 @@ Servir le curry avec le riz.`,notes:''}
     document.querySelector('#recipeList').addEventListener('click',event=>{const edit=event.target.closest('[data-recipe-edit]');if(!edit)return;event.preventDefault();event.stopImmediatePropagation();const recipe=extras.recipes.find(item=>sameId(item.id,edit.dataset.recipeEdit));if(recipe)showRecipeEditorV75(recipe)},true);
     renderRecipeThemeTools();renderRecipeCards();applyRecipeFilters();
     document.querySelector('#tabGoals').textContent='Bien-être';
-    localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));importPdfRecipes20260907();importValidatedMealPlan20260911();if(!localRevision&&hasMeaningfulLocalData()){localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('initialisation-protection')}if(snapshotScore(safetySnapshot())>0)writeBackupHistory('startup');renderControls();render();renderMeals();renderToday();setQuickType('appointment');openShortcutRoute();setupFirebase();
+    localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));importPdfRecipes20260907();importPdfRecipes20260912();importValidatedMealPlan20260911();if(!localRevision&&hasMeaningfulLocalData()){localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('initialisation-protection')}if(snapshotScore(safetySnapshot())>0)writeBackupHistory('startup');renderControls();render();renderMeals();renderToday();setQuickType('appointment');openShortcutRoute();setupFirebase();
   </script>
 </body>
 </html>
