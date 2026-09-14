@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v79 : recettes et courses améliorées sur iPhone -->
+<!-- Version v80 : alignement iPad et synchronisation protégée -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -387,6 +387,12 @@
   #panelRecipes .recipe-card-control{width:100%;height:48px;border-radius:11px}
   #panelRecipes .recipe-card-control.category,#panelRecipes .recipe-card-control.calendar{background:transparent}
   @media(max-width:600px){#panelRecipes .recipe-card-controls{margin-right:-13px;margin-left:-13px;margin-bottom:-13px}}
+  /* v80 en préparation : cartes de recettes correctement alignées sur iPad. */
+  @media(min-width:701px) and (max-width:1366px){
+    #panelRecipes .recipe-list{max-height:none;overflow:visible;align-items:stretch}
+    #panelRecipes .recipe-card{display:flex;height:100%;flex-direction:column}
+    #panelRecipes .recipe-card-open-hint{margin-top:auto}
+  }
 </style>
 </head>
 <body>
@@ -500,14 +506,14 @@
     const pad=value=>String(value).padStart(2,'0');
     const dateKey=(year,month,day)=>`${year}-${pad(month+1)}-${pad(day)}`;
     const today=dateKey(now.getFullYear(),now.getMonth(),now.getDate());
-    const cloudSync={ready:false,applying:false,user:null,document:null,setDocument:null,serverTime:null,timer:null,unsubscribe:null},familySync={ready:false,applying:false,user:null,database:null,document:null,setDocument:null,serverTime:null,doc:null,collection:null,query:null,where:null,limit:null,onSnapshot:null,timer:null,unsubscribe:null,pendingRevision:0},dataRevisionKey='faciliter-quotidien-revision-v1',dataBackupKey='faciliter-quotidien-sauvegarde-v1',dataHistoryKey='faciliter-quotidien-historique-v1',familyRevisionKey='faciliter-famille-revision-v1';let localRevision=Number(localStorage.getItem(dataRevisionKey))||0,familyRevision=Number(localStorage.getItem(familyRevisionKey))||0;
+    const cloudSync={ready:false,applying:false,user:null,document:null,setDocument:null,serverTime:null,timer:null,unsubscribe:null},familySync={ready:false,applying:false,user:null,database:null,document:null,setDocument:null,serverTime:null,doc:null,collection:null,query:null,where:null,limit:null,onSnapshot:null,timer:null,unsubscribe:null,pendingRevision:0},dataRevisionKey='faciliter-quotidien-revision-v1',dataBackupKey='faciliter-quotidien-sauvegarde-v1',dataHistoryKey='faciliter-quotidien-historique-v1',familyRevisionKey='faciliter-famille-revision-v1';let localRevision=Number(localStorage.getItem(dataRevisionKey))||0,familyRevision=Number(localStorage.getItem(familyRevisionKey))||0,deferAutomaticImportRevision=false;
     function safetySnapshot(reason='automatic'){try{return{reason,savedAt:Date.now(),revision:localRevision,goalsState:state,meals,organizer,extras}}catch{return null}}
     function snapshotScore(payload){try{return Object.keys(payload?.meals||{}).length+Object.keys(payload?.goalsState?.checks||{}).length+Math.max(0,(payload?.goalsState?.goals||[]).length-starterGoals.length)*2+(payload?.organizer?.tasks||[]).length*3+(payload?.organizer?.appointments||[]).length*3+(payload?.organizer?.purchases||[]).length*3+Object.keys(payload?.organizer?.sleep||{}).length+(payload?.extras?.shopping||[]).length*2+(payload?.extras?.journal||[]).length*2+(payload?.extras?.recipes||[]).length*3+Object.keys(payload?.extras?.weekPlan||{}).length}catch{return 0}}
     function readSafetyBackup(){try{return JSON.parse(localStorage.getItem(dataBackupKey)||'null')}catch{return null}}
     function readBackupHistory(){try{const value=JSON.parse(localStorage.getItem(dataHistoryKey)||'[]');return Array.isArray(value)?value:[]}catch{return[]}}
     function writeSafetyBackup(reason){const snapshot=safetySnapshot(reason),previous=readSafetyBackup();if(snapshot&&snapshotScore(snapshot)>=snapshotScore(previous))localStorage.setItem(dataBackupKey,JSON.stringify(snapshot))}
     function writeBackupHistory(reason){const snapshot=safetySnapshot(reason);if(!snapshot)return;const history=readBackupHistory(),last=history[0];if(last&&Date.now()-Number(last.savedAt)<60000&&snapshotScore(last)===snapshotScore(snapshot))return;history.unshift(snapshot);while(history.length>8)history.pop();try{localStorage.setItem(dataHistoryKey,JSON.stringify(history))}catch{history.pop();try{localStorage.setItem(dataHistoryKey,JSON.stringify(history))}catch{}}}
-    function touchLocalRevision(){localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('local-change');writeBackupHistory('automatic')}
+    function touchLocalRevision(){if(deferAutomaticImportRevision)return;localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('local-change');writeBackupHistory('automatic')}
     function cleanCloudData(){const clean=JSON.parse(JSON.stringify({goalsState:state,meals,organizer,extras,clientUpdatedAt:localRevision||Date.now()}));clean.updatedAt=cloudSync.serverTime();return clean}
     function scheduleCloudSave(){if(!cloudSync.ready||cloudSync.applying||!cloudSync.user||!cloudSync.document||!cloudSync.setDocument)return;if(snapshotScore(safetySnapshot())===0){setSyncStatus('Aucune donnée locale à envoyer — copie Google préservée');return}clearTimeout(cloudSync.timer);cloudSync.timer=setTimeout(async()=>{setSyncStatus('Synchronisation…');try{await cloudSync.setDocument(cloudSync.document,cleanCloudData());setSyncStatus('Synchronisé avec Google')}catch(error){console.error(error);setSyncStatus('Google impossible · '+(error?.code||'connexion')+' — données locales conservées')}},500)}
     function save(){localStorage.setItem(storageKey,JSON.stringify(state));touchLocalRevision();scheduleCloudSave();if(typeof organizer!=='undefined')renderToday()}
@@ -1600,7 +1606,7 @@ Servir le curry avec le riz.`,notes:''}
     document.querySelector('#recipeList').addEventListener('click',event=>{const edit=event.target.closest('[data-recipe-edit]');if(!edit)return;event.preventDefault();event.stopImmediatePropagation();const recipe=extras.recipes.find(item=>sameId(item.id,edit.dataset.recipeEdit));if(recipe)showRecipeEditorV75(recipe)},true);
     renderRecipeThemeTools();renderRecipeCards();applyRecipeFilters();
     document.querySelector('#tabGoals').textContent='Bien-être';
-    localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));importPdfRecipes20260907();importPdfRecipes20260912();importPdfRecipes20260913();importValidatedMealPlan20260911();if(!localRevision&&hasMeaningfulLocalData()){localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('initialisation-protection')}if(snapshotScore(safetySnapshot())>0)writeBackupHistory('startup');renderControls();render();renderMeals();renderToday();setQuickType('appointment');openShortcutRoute();setupFirebase();
+    localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));const hadLocalDataBeforeBuiltInImports=hasMeaningfulLocalData();deferAutomaticImportRevision=true;try{importPdfRecipes20260907();importPdfRecipes20260912();importPdfRecipes20260913();importValidatedMealPlan20260911()}finally{deferAutomaticImportRevision=false}if(!localRevision&&hadLocalDataBeforeBuiltInImports){localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('initialisation-protection')}if(snapshotScore(safetySnapshot())>0)writeBackupHistory('startup');renderControls();render();renderMeals();renderToday();setQuickType('appointment');openShortcutRoute();setupFirebase();
   </script>
 </body>
 </html>
