@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v104 : interface iPhone corrigée et typographie harmonisée -->
+<!-- Version v105 : en-tête coloré, police commune et listes terminées rapprochées -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -624,7 +624,7 @@
     }
     @media(max-width:375px){.top h1{font-size:.88rem}.top .account-button{font-size:.64rem}.mobile-nav button{font-size:.62rem}}
     /* v101 : les éléments cochés restent accessibles en bas de chaque rubrique. */
-    #panelTodos .todo-completed{margin-top:14px}
+    #panelTodos .todo-completed{margin-top:0}
     #panelTodos .todo-completed .todo-completed-count{font-family:system-ui,sans-serif;font-size:.82rem}
     #panelShopping .shopping-completed{margin-top:14px;padding:0;border:1px solid #dfe4eb;border-radius:16px;background:#fff}
     #panelShopping .shopping-completed[hidden]{display:none}
@@ -671,8 +671,7 @@
     #panelMeals .meal-date-jump small{font-size:.58rem;line-height:1}
     /* Typographie commune : mêmes rôles, mêmes tailles dans chaque rubrique. */
     :root{--type-family:-apple-system,BlinkMacSystemFont,"Avenir Next","Segoe UI",sans-serif;--type-heading:1.35rem;--type-subheading:1.13rem;--type-item:.94rem;--type-label:.82rem;--type-meta:.76rem;--type-action:.86rem}
-    body{font-family:var(--type-family)}
-    :is(h1,h2,h3,button,input,select,textarea,summary){font-family:var(--type-family)!important}
+    body,body *{font-family:var(--type-family)!important}
     .tab-panel :is(.panel>h2,.feature-card>h2,.meal-tool-head h2,.wellbeing-heading h2,.today-detail-head h2,.journal-calendar-head h2){font-size:var(--type-heading)!important;font-weight:750;line-height:1.2;letter-spacing:-.02em}
     .tab-panel :is(.board-head h2,.section-intro h2){font-size:1.55rem!important;font-weight:750;line-height:1.2;letter-spacing:-.02em}
     .tab-panel :is(.panel h3,.feature-card h3){font-size:var(--type-subheading);font-weight:750;line-height:1.25;letter-spacing:-.01em}
@@ -681,7 +680,13 @@
     .tab-panel :is(.primary,.secondary,.form-toggle,.todo-section-nav button,.shopping-view-switch button,.agenda-color-key){font-size:var(--type-action);font-weight:750}
     .tab-panel :is(.todo-content .item-title,.shopping-product-button strong,.simple-meal-value strong,.agenda-day-card strong,.app-item .item-title){font-size:var(--type-item)!important;line-height:1.35}
     .tab-panel :is(.hint,.item-meta,.feature-meta,.simple-meal-value small,.agenda-day-card small){font-size:var(--type-meta)!important;line-height:1.4}
-    @media(max-width:600px){.tab-panel :is(.board-head h2,.section-intro h2){font-size:1.45rem!important}.tab-panel :is(.field input,.field select,.field textarea,.simple-meal-editor input,.simple-meal-editor select){font-size:16px}}
+    @media(max-width:600px){
+      .top{padding:12px 14px;color:#fff;background:linear-gradient(128deg,#021b39,#06264c);border:1px solid #021b39;border-radius:18px;box-shadow:0 8px 22px rgb(2 27 57 / 16%)}
+      .top h1,.top .sync-status{color:#fff}
+      .top .account-button,.top .account-button.connected{color:#781325;background:#fff;border-color:#fff}
+      .tab-panel :is(.board-head h2,.section-intro h2){font-size:1.45rem!important}
+      .tab-panel :is(.field input,.field select,.field textarea,.simple-meal-editor input,.simple-meal-editor select){font-size:16px}
+    }
 </style>
 </head>
 <body>
@@ -1747,10 +1752,11 @@ Servir le curry avec le riz.`,notes:''}
     function closeReserveForm(){resetReserveForm();document.querySelector('#reserveForm').hidden=true;document.querySelector('#reserveAddButton').hidden=false}
     function installReserveSection(){const panel=document.querySelector('#panelShopping'),grid=panel?.querySelector('.capture-grid'),status=panel?.querySelector('#familyShoppingStatus');if(!panel||!grid||panel.querySelector('.shopping-view-switch'))return;const viewSwitch=document.createElement('div');viewSwitch.className='shopping-view-switch';viewSwitch.innerHTML='<button class="active" type="button" data-shopping-view="list">Liste de courses</button><button type="button" data-shopping-view="reserves">Mes réserves</button>';status.after(viewSwitch);const reserves=document.createElement('section');reserves.className='reserve-page';reserves.id='reservePage';reserves.hidden=true;reserves.innerHTML='<section class="panel reserve-hero"><div class="reserve-head"><div><p class="eyebrow">Ce que j’ai déjà</p><h2>Mes réserves</h2><p>Ces produits aideront à choisir les menus et à limiter les achats.</p></div><strong class="reserve-count" id="reserveTotal">0</strong></div><div class="reserve-summary"><span><strong data-reserve-count="Réfrigérateur">0</strong>Frigo</span><span><strong data-reserve-count="Congélateur">0</strong>Congélateur</span><span><strong data-reserve-count="Placards">0</strong>Placards</span></div><button class="primary reserve-add-button" id="reserveAddButton" type="button">＋ Ajouter un produit</button><form class="reserve-form" id="reserveForm" hidden><h3 id="reserveFormTitle">Ajouter un produit</h3><label class="field">Produit<input id="reserveText" required maxlength="100" placeholder="Ex. : petits pois"></label><label class="field">Où se trouve-t-il ?<select id="reserveLocation"><option>Réfrigérateur</option><option>Congélateur</option><option>Placards</option></select></label><div class="reserve-form-row"><label class="field">Quantité <span class="hint">(facultatif)</span><input id="reserveQuantity" type="number" min="0.01" step="0.01" inputmode="decimal"></label><label class="field">Unité<select id="reserveUnit"><option value="pièce">Pièce(s)</option><option value="g">g</option><option value="kg">kg</option><option value="ml">ml</option><option value="cl">cl</option><option value="l">l</option><option value="paquet">Paquet(s)</option><option value="boîte">Boîte(s)</option></select></label></div><label class="field">À consommer avant le <span class="hint">(facultatif)</span><input id="reserveExpiry" type="date"></label><label class="reserve-priority"><input id="reservePriority" type="checkbox">À utiliser en priorité dans les prochains menus</label><div class="reserve-form-actions"><button class="primary" id="reserveSave" type="submit">Ajouter</button><button class="secondary" id="reserveCancel" type="button">Annuler</button></div></form></section><p class="reserve-shared-note">Ces réserves sont partagées avec votre mari comme les repas et les courses.</p><div class="reserve-groups" id="reserveGroups"></div>';grid.after(reserves);viewSwitch.addEventListener('click',event=>{const button=event.target.closest('[data-shopping-view]');if(!button)return;const showReserves=button.dataset.shoppingView==='reserves';viewSwitch.querySelectorAll('button').forEach(current=>current.classList.toggle('active',current===button));grid.hidden=showReserves;reserves.hidden=!showReserves;if(showReserves)renderReserves()});document.querySelector('#reserveAddButton').addEventListener('click',()=>openReserveForm());document.querySelector('#reserveCancel').addEventListener('click',closeReserveForm);document.querySelector('#reserveForm').addEventListener('submit',event=>{event.preventDefault();const previous=extras.reserves.find(item=>sameId(item.id,editingReserveId)),quantityText=document.querySelector('#reserveQuantity').value,item={...(previous||{}),id:previous?.id||createId(),text:document.querySelector('#reserveText').value.trim(),location:document.querySelector('#reserveLocation').value,quantity:quantityText===''?'':shoppingNumber(quantityText),unit:document.querySelector('#reserveUnit').value,expiry:document.querySelector('#reserveExpiry').value,priority:document.querySelector('#reservePriority').checked};if(previous)extras.reserves=extras.reserves.map(current=>sameId(current.id,previous.id)?item:current);else extras.reserves.push(item);closeReserveForm();saveExtras();showToast(previous?'Réserve modifiée':'Produit ajouté aux réserves')});document.querySelector('#reserveGroups').addEventListener('click',event=>{const edit=event.target.closest('[data-reserve-edit]'),remove=event.target.closest('[data-reserve-delete]');if(edit){const item=extras.reserves.find(current=>sameId(current.id,edit.dataset.reserveEdit));if(item)openReserveForm(item)}if(remove&&confirm('Supprimer définitivement ce produit des réserves ?')){extras.reserves=extras.reserves.filter(item=>!sameId(item.id,remove.dataset.reserveDelete));saveExtras();showToast('Produit supprimé des réserves')}})}
     installReserveSection();const renderExtrasBeforeReserves=renderExtras;renderExtras=()=>{renderExtrasBeforeReserves();renderReserves()};renderReserves();
-    // Les courses cochées restent accessibles dans une section repliée en bas de la rubrique.
+    // Les courses cochées suivent immédiatement les produits encore à acheter.
     const shoppingCompleted=document.querySelector('#shoppingCompleted');
-    shoppingCompleted.classList.add('panel');document.querySelector('#panelShopping').append(shoppingCompleted);
-    document.querySelector('#panelShopping .shopping-view-switch').addEventListener('click',event=>{if(event.target.closest('[data-shopping-view]'))shoppingCompleted.hidden=event.target.closest('[data-shopping-view]').dataset.shoppingView==='reserves'});
+    document.querySelector('#shoppingList').after(shoppingCompleted);
+    // Les tâches terminées suivent la liste des tâches, avant le formulaire sur iPhone.
+    document.querySelector('#panelTodos .app-stack').append(document.querySelector('#todoCompleted'));
     function installMenuShoppingStatus(){/* Les courses se gèrent directement dans leur rubrique. */}
     installMenuShoppingStatus();
     const renderExtrasMealBase=renderExtras;renderExtras=()=>{renderExtrasMealBase();renderShoppingGroups();renderMenuShoppingStatus();document.querySelectorAll('#panelShopping [data-extra-delete^="shopping:"]').forEach(button=>{button.classList.add('shopping-delete-icon');button.setAttribute('aria-label',button.getAttribute('aria-label')||'Supprimer cet article');button.title='Supprimer';button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/></svg>'});renderMealPlanner();applyRecipeFilters()};
