@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v107 : calendrier des repas corrigé, navigation simplifiée et compteurs bordeaux -->
+<!-- Version v108 : six pictogrammes et en-tête bordeaux des repas -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -735,6 +735,15 @@
     :is(#panelTodos,#panelPurchases) .total-box span{font-size:.75rem;line-height:1.2}
     :is(#panelTodos,#panelPurchases) .total-box strong{display:block;margin-top:5px;font-size:1.22rem;font-weight:800;line-height:1.1}
     @media(max-width:600px){:is(#panelTodos,#panelPurchases) .totals{gap:5px}:is(#panelTodos,#panelPurchases) .total-box{padding:11px 5px;text-align:center}:is(#panelTodos,#panelPurchases) .total-box span{min-height:2.4em;font-size:.65rem}:is(#panelTodos,#panelPurchases) .total-box strong{font-size:1.03rem}}
+    #panelMeals .meal-selected-heading{margin:0;padding:13px 16px 9px;color:#54273b;font-size:1rem;font-weight:750;text-transform:capitalize}
+    @media(max-width:1024px){
+      .mobile-nav{justify-content:space-around}
+      #panelMeals .meal-week-card{padding:0;overflow:hidden}
+      #panelMeals .meal-week-card>.meal-tool-head{display:flex;align-items:center;min-height:66px;margin:0;padding:16px 14px;color:#fff;background:#54273b;border-radius:18px 18px 0 0}
+      #panelMeals .meal-week-card>.meal-tool-head h2{margin:0;color:#fff;font-size:clamp(1.3rem,5vw,1.85rem)!important;line-height:1.15;text-transform:capitalize}
+      #panelMeals .meal-date-strip{margin:0;border-bottom:1px solid #efe7ed}
+      #panelMeals .meal-week-plan{padding:0 16px 16px}
+    }
 </style>
 </head>
 <body>
@@ -812,9 +821,6 @@
       <button type="button" data-mobile-tab="shopping" aria-label="Courses" title="Courses"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h11l2-7H6"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg></span></button>
       <button type="button" data-mobile-tab="purchases" aria-label="Achats" title="Achats"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 13H5L6 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg></span></button>
       <button type="button" data-mobile-tab="notes" aria-label="Notes" title="Notes"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5"/></svg></span></button>
-      <button type="button" data-mobile-tab="today" aria-label="Aujourd’hui" title="Aujourd’hui"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg></span></button>
-      <button type="button" data-mobile-tab="goals" aria-label="Bien-être" title="Bien-être"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-4.5-8-10a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.5-8 10-8 10Z"/></svg></span></button>
-      <button type="button" data-mobile-tab="journal" aria-label="Journal" title="Journal"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h14v18H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3ZM6 3v18M9 8h8M9 12h6"/></svg></span></button>
       <button id="mobileMoreButton" type="button" aria-label="Afficher les autres rubriques" hidden><span class="nav-icon mobile-plus-icon">•••</span>Plus</button>
     </nav>
     <button class="quick-sheet-backdrop" id="quickSheetBackdrop" type="button" aria-label="Fermer"></button>
@@ -2057,6 +2063,7 @@ Servir le curry avec le riz.`,notes:''}
     document.querySelectorAll('#panelMeals .meal-date-strip').forEach(strip=>strip.remove());
     const mealDateStrip=document.createElement('nav');mealDateStrip.className='meal-date-strip';mealDateStrip.setAttribute('aria-label','Dates des repas, à faire défiler horizontalement');
     document.querySelector('#mealWeekPlan').before(mealDateStrip);
+    const mealDayHeading=document.createElement('h3');mealDayHeading.className='meal-selected-heading';mealDateStrip.after(mealDayHeading);
     const mealDateAnchor=new Date(today+'T12:00:00');let mealStripFirst=-14,mealStripLast=42,mealStripSelected=today;
     function mealStripDate(index){const day=new Date(mealDateAnchor);day.setDate(day.getDate()+index);return day}
     function mealStripButton(index){const day=mealStripDate(index),key=dateKey(day.getFullYear(),day.getMonth(),day.getDate()),count=['lunch','dinner'].filter(type=>Boolean(extras.weekPlan[key+':'+type]||meals[key+':'+type])).length,weekday=new Intl.DateTimeFormat('fr-FR',{weekday:'short'}).format(day).replace('.','');return '<button class="cal-cell '+(key===today?'today-cell ':'')+(key===mealStripSelected?'selected-day':'')+'" type="button" data-meal-jump="'+key+'" aria-label="'+escapeHtml(new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(day))+' · '+count+' repas" aria-pressed="'+(key===mealStripSelected)+'"><span class="cal-weekday">'+escapeHtml(weekday)+'</span><span class="cal-number">'+day.getDate()+'</span><span class="mobile-event-dots">'+Array.from({length:count},()=>'<i class="mobile-event-dot" style="--event-color:'+agendaTypeColors.meal+'"></i>').join('')+'</span></button>'}
@@ -2067,7 +2074,8 @@ Servir le curry avec le riz.`,notes:''}
     mealDateStrip.addEventListener('click',event=>{const button=event.target.closest('[data-meal-jump]');if(!button)return;mealStripSelected=button.dataset.mealJump;simpleMealEditingSlot='';renderMealPlanner()});
     function renderSimpleMealPlanner(){
       const start=new Date(mealStripSelected+'T12:00:00');
-      document.querySelector('#mealWeekTitle').textContent=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(start);
+      document.querySelector('#mealWeekTitle').textContent=new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'}).format(start);
+      mealDayHeading.textContent=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(start);
       document.querySelector('#mealWeekPlan').innerHTML=Array.from({length:1},(_,index)=>{
         const day=new Date(start);day.setDate(start.getDate()+index);
         const date=dateKey(day.getFullYear(),day.getMonth(),day.getDate()),weekday=new Intl.DateTimeFormat('fr-FR',{weekday:'long'}).format(day),shortDate=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'}).format(day);
