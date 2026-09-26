@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v103 : repas saisis librement avec source facultative -->
+<!-- Version v104 : interface iPhone corrigée et typographie harmonisée -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -598,12 +598,12 @@
     @media(max-width:600px){
       body{background:#f6f7f9}
       .wrap{width:calc(100% - 20px);padding-top:10px}
-      .top{align-items:center;display:flex;gap:8px;margin:0 0 12px;padding:7px 3px;background:none;border:0;border-radius:0;box-shadow:none;overflow:visible}
+      .top{align-items:center;display:flex;gap:8px;margin:0 0 12px;padding:7px 3px;color:#021b39;background:none;border:0;border-radius:0;box-shadow:none;overflow:visible}
       .top::after,.top .eyebrow,.top .today-label{display:none}
-      .top h1{font:750 1rem/1.2 system-ui,sans-serif;letter-spacing:0;white-space:nowrap}
+      .top h1{color:#021b39;font:750 1rem/1.2 system-ui,sans-serif;letter-spacing:0;white-space:nowrap}
       .top>div:last-child{margin-left:auto;min-width:0}
       .top .account{margin:0;align-items:flex-end;flex-direction:column;gap:1px}
-      .top .sync-status{max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.63rem}
+      .top .sync-status{max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#536071;font-size:.63rem}
       .top .account-button{min-height:40px;padding:7px 9px;font-size:.7rem;white-space:normal;text-align:center;line-height:1.15}
       :is(#panelMeals,#panelRecipes,#panelShopping,#panelTodos,#panelPurchases)>.section-intro{display:none}
       :is(#panelMeals,#panelShopping,#panelTodos,#panelPurchases,#panelAgenda) .mobile-collapsible:not(.form-open)>h2:first-child{display:none}
@@ -627,12 +627,13 @@
     #panelTodos .todo-completed{margin-top:14px}
     #panelTodos .todo-completed .todo-completed-count{font-family:system-ui,sans-serif;font-size:.82rem}
     #panelShopping .shopping-completed{margin-top:14px;padding:0;border:1px solid #dfe4eb;border-radius:16px;background:#fff}
-    #panelShopping .shopping-completed>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px;padding:11px 15px;color:#021b39;cursor:pointer;list-style:none;font-size:1.05rem;font-weight:800}
+    #panelShopping .shopping-completed[hidden]{display:none}
+    #panelShopping .shopping-completed>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:58px;padding:12px 17px;color:#021b39;cursor:pointer;list-style:none;font-family:Georgia,serif;font-size:1.22rem;font-weight:600}
     #panelShopping .shopping-completed>summary::-webkit-details-marker{display:none}
     #panelShopping .shopping-completed>summary::after{content:'⌄';display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;color:#781325;background:#f4e7ea;border-radius:50%;transition:transform .18s}
     #panelShopping .shopping-completed[open]>summary::after{transform:rotate(180deg)}
-    #panelShopping .shopping-completed-count{margin-left:auto;color:#687181;font-size:.82rem}
-    #panelShopping #checkedShoppingList{padding:0 12px 14px}
+    #panelShopping .shopping-completed-count{margin-left:auto;margin-right:10px;color:#687181;font:750 .82rem system-ui,sans-serif}
+    #panelShopping #checkedShoppingList{padding:0 17px 17px}
     #panelShopping #checkedShoppingList .shopping-row.done .shopping-product-button{opacity:.8}
     @media(max-width:1024px){#panelTodos .todo-completed>summary,#panelShopping .shopping-completed>summary{min-height:54px}#panelShopping #checkedShoppingList .shopping-row>input{min-width:22px;min-height:22px}}
     /* v102 : filtre par type, échéances visibles directement dans la liste. */
@@ -662,6 +663,25 @@
     #panelMeals .simple-meal-actions .simple-meal-cancel{color:#021b39;background:#e8edf3;border:0}
     #panelMeals .simple-meal-actions .simple-meal-remove{margin-left:auto;color:#781325;background:transparent;border:0}
     @media(max-width:850px){#panelMeals .simple-meal-day{grid-template-columns:1fr;gap:9px}#panelMeals .simple-meal-slot{grid-template-columns:43px minmax(0,1fr);align-items:start}#panelMeals .simple-meal-slot>span{padding-top:12px}#panelMeals .simple-meal-value,#panelMeals .simple-meal-editor{grid-column:2}}
+    #panelMeals .meal-tool-head .nav{display:none}
+    #panelMeals .meal-date-strip{display:flex;gap:5px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 8px;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x}
+    #panelMeals .meal-date-strip::-webkit-scrollbar{display:none}
+    #panelMeals .meal-date-jump{flex:0 0 62px;scroll-snap-align:start}
+    #panelMeals .meal-date-jump.selected:not(.current){color:#781325;background:#f4e7ea}
+    #panelMeals .meal-date-jump small{font-size:.58rem;line-height:1}
+    /* Typographie commune : mêmes rôles, mêmes tailles dans chaque rubrique. */
+    :root{--type-family:-apple-system,BlinkMacSystemFont,"Avenir Next","Segoe UI",sans-serif;--type-heading:1.35rem;--type-subheading:1.13rem;--type-item:.94rem;--type-label:.82rem;--type-meta:.76rem;--type-action:.86rem}
+    body{font-family:var(--type-family)}
+    :is(h1,h2,h3,button,input,select,textarea,summary){font-family:var(--type-family)!important}
+    .tab-panel :is(.panel>h2,.feature-card>h2,.meal-tool-head h2,.wellbeing-heading h2,.today-detail-head h2,.journal-calendar-head h2){font-size:var(--type-heading)!important;font-weight:750;line-height:1.2;letter-spacing:-.02em}
+    .tab-panel :is(.board-head h2,.section-intro h2){font-size:1.55rem!important;font-weight:750;line-height:1.2;letter-spacing:-.02em}
+    .tab-panel :is(.panel h3,.feature-card h3){font-size:var(--type-subheading);font-weight:750;line-height:1.25;letter-spacing:-.01em}
+    :is(#panelTodos .todo-completed>summary,#panelShopping .shopping-completed>summary,#panelPurchases .bought-toggle-title){font-size:var(--type-subheading);font-weight:750;line-height:1.25;letter-spacing:-.01em}
+    .tab-panel :is(.field,.simple-meal-editor label,.shopping-photo-field>span){font-size:var(--type-label);font-weight:750}
+    .tab-panel :is(.primary,.secondary,.form-toggle,.todo-section-nav button,.shopping-view-switch button,.agenda-color-key){font-size:var(--type-action);font-weight:750}
+    .tab-panel :is(.todo-content .item-title,.shopping-product-button strong,.simple-meal-value strong,.agenda-day-card strong,.app-item .item-title){font-size:var(--type-item)!important;line-height:1.35}
+    .tab-panel :is(.hint,.item-meta,.feature-meta,.simple-meal-value small,.agenda-day-card small){font-size:var(--type-meta)!important;line-height:1.4}
+    @media(max-width:600px){.tab-panel :is(.board-head h2,.section-intro h2){font-size:1.45rem!important}.tab-panel :is(.field input,.field select,.field textarea,.simple-meal-editor input,.simple-meal-editor select){font-size:16px}}
 </style>
 </head>
 <body>
@@ -1727,6 +1747,10 @@ Servir le curry avec le riz.`,notes:''}
     function closeReserveForm(){resetReserveForm();document.querySelector('#reserveForm').hidden=true;document.querySelector('#reserveAddButton').hidden=false}
     function installReserveSection(){const panel=document.querySelector('#panelShopping'),grid=panel?.querySelector('.capture-grid'),status=panel?.querySelector('#familyShoppingStatus');if(!panel||!grid||panel.querySelector('.shopping-view-switch'))return;const viewSwitch=document.createElement('div');viewSwitch.className='shopping-view-switch';viewSwitch.innerHTML='<button class="active" type="button" data-shopping-view="list">Liste de courses</button><button type="button" data-shopping-view="reserves">Mes réserves</button>';status.after(viewSwitch);const reserves=document.createElement('section');reserves.className='reserve-page';reserves.id='reservePage';reserves.hidden=true;reserves.innerHTML='<section class="panel reserve-hero"><div class="reserve-head"><div><p class="eyebrow">Ce que j’ai déjà</p><h2>Mes réserves</h2><p>Ces produits aideront à choisir les menus et à limiter les achats.</p></div><strong class="reserve-count" id="reserveTotal">0</strong></div><div class="reserve-summary"><span><strong data-reserve-count="Réfrigérateur">0</strong>Frigo</span><span><strong data-reserve-count="Congélateur">0</strong>Congélateur</span><span><strong data-reserve-count="Placards">0</strong>Placards</span></div><button class="primary reserve-add-button" id="reserveAddButton" type="button">＋ Ajouter un produit</button><form class="reserve-form" id="reserveForm" hidden><h3 id="reserveFormTitle">Ajouter un produit</h3><label class="field">Produit<input id="reserveText" required maxlength="100" placeholder="Ex. : petits pois"></label><label class="field">Où se trouve-t-il ?<select id="reserveLocation"><option>Réfrigérateur</option><option>Congélateur</option><option>Placards</option></select></label><div class="reserve-form-row"><label class="field">Quantité <span class="hint">(facultatif)</span><input id="reserveQuantity" type="number" min="0.01" step="0.01" inputmode="decimal"></label><label class="field">Unité<select id="reserveUnit"><option value="pièce">Pièce(s)</option><option value="g">g</option><option value="kg">kg</option><option value="ml">ml</option><option value="cl">cl</option><option value="l">l</option><option value="paquet">Paquet(s)</option><option value="boîte">Boîte(s)</option></select></label></div><label class="field">À consommer avant le <span class="hint">(facultatif)</span><input id="reserveExpiry" type="date"></label><label class="reserve-priority"><input id="reservePriority" type="checkbox">À utiliser en priorité dans les prochains menus</label><div class="reserve-form-actions"><button class="primary" id="reserveSave" type="submit">Ajouter</button><button class="secondary" id="reserveCancel" type="button">Annuler</button></div></form></section><p class="reserve-shared-note">Ces réserves sont partagées avec votre mari comme les repas et les courses.</p><div class="reserve-groups" id="reserveGroups"></div>';grid.after(reserves);viewSwitch.addEventListener('click',event=>{const button=event.target.closest('[data-shopping-view]');if(!button)return;const showReserves=button.dataset.shoppingView==='reserves';viewSwitch.querySelectorAll('button').forEach(current=>current.classList.toggle('active',current===button));grid.hidden=showReserves;reserves.hidden=!showReserves;if(showReserves)renderReserves()});document.querySelector('#reserveAddButton').addEventListener('click',()=>openReserveForm());document.querySelector('#reserveCancel').addEventListener('click',closeReserveForm);document.querySelector('#reserveForm').addEventListener('submit',event=>{event.preventDefault();const previous=extras.reserves.find(item=>sameId(item.id,editingReserveId)),quantityText=document.querySelector('#reserveQuantity').value,item={...(previous||{}),id:previous?.id||createId(),text:document.querySelector('#reserveText').value.trim(),location:document.querySelector('#reserveLocation').value,quantity:quantityText===''?'':shoppingNumber(quantityText),unit:document.querySelector('#reserveUnit').value,expiry:document.querySelector('#reserveExpiry').value,priority:document.querySelector('#reservePriority').checked};if(previous)extras.reserves=extras.reserves.map(current=>sameId(current.id,previous.id)?item:current);else extras.reserves.push(item);closeReserveForm();saveExtras();showToast(previous?'Réserve modifiée':'Produit ajouté aux réserves')});document.querySelector('#reserveGroups').addEventListener('click',event=>{const edit=event.target.closest('[data-reserve-edit]'),remove=event.target.closest('[data-reserve-delete]');if(edit){const item=extras.reserves.find(current=>sameId(current.id,edit.dataset.reserveEdit));if(item)openReserveForm(item)}if(remove&&confirm('Supprimer définitivement ce produit des réserves ?')){extras.reserves=extras.reserves.filter(item=>!sameId(item.id,remove.dataset.reserveDelete));saveExtras();showToast('Produit supprimé des réserves')}})}
     installReserveSection();const renderExtrasBeforeReserves=renderExtras;renderExtras=()=>{renderExtrasBeforeReserves();renderReserves()};renderReserves();
+    // Les courses cochées restent accessibles dans une section repliée en bas de la rubrique.
+    const shoppingCompleted=document.querySelector('#shoppingCompleted');
+    shoppingCompleted.classList.add('panel');document.querySelector('#panelShopping').append(shoppingCompleted);
+    document.querySelector('#panelShopping .shopping-view-switch').addEventListener('click',event=>{if(event.target.closest('[data-shopping-view]'))shoppingCompleted.hidden=event.target.closest('[data-shopping-view]').dataset.shoppingView==='reserves'});
     function installMenuShoppingStatus(){/* Les courses se gèrent directement dans leur rubrique. */}
     installMenuShoppingStatus();
     const renderExtrasMealBase=renderExtras;renderExtras=()=>{renderExtrasMealBase();renderShoppingGroups();renderMenuShoppingStatus();document.querySelectorAll('#panelShopping [data-extra-delete^="shopping:"]').forEach(button=>{button.classList.add('shopping-delete-icon');button.setAttribute('aria-label',button.getAttribute('aria-label')||'Supprimer cet article');button.title='Supprimer';button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/></svg>'});renderMealPlanner();applyRecipeFilters()};
@@ -1944,18 +1968,29 @@ Servir le curry avec le riz.`,notes:''}
     /* v103 : le planning conserve les anciennes recettes, mais la saisie est un nom libre et une source facultative. */
     let simpleMealEditingSlot='';
     const simpleMealSources=['HelloFresh','Cookidoo','Cookomix','WeChef','Autre'];
+    /* Navigation continue des dates : le planning reste sur sept jours, la bande se prolonge au défilement. */
+    const mealDateStrip=document.createElement('nav');mealDateStrip.className='meal-date-strip';mealDateStrip.setAttribute('aria-label','Dates des repas, à faire défiler horizontalement');
+    document.querySelector('#mealWeekPlan').before(mealDateStrip);
+    const mealDateAnchor=new Date(today+'T12:00:00');let mealStripFirst=-14,mealStripLast=42,mealStripSelected=today;
+    function mealStripDate(index){const day=new Date(mealDateAnchor);day.setDate(day.getDate()+index);return day}
+    function mealStripButton(index){const day=mealStripDate(index),key=dateKey(day.getFullYear(),day.getMonth(),day.getDate()),count=['lunch','dinner'].filter(type=>Boolean(extras.weekPlan[key+':'+type])).length,weekday=new Intl.DateTimeFormat('fr-FR',{weekday:'short'}).format(day).replace('.',''),month=new Intl.DateTimeFormat('fr-FR',{month:'short'}).format(day).replace('.','');return '<button class="meal-date-jump '+(key===today?'current ':'')+(key===mealStripSelected?'selected ':'')+(count===0?'no-meal':count===1?'one-meal':'')+'" type="button" data-meal-jump="'+key+'" aria-label="'+escapeHtml(new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(day))+'" aria-pressed="'+(key===mealStripSelected)+'"><span>'+escapeHtml(weekday)+'</span><strong>'+day.getDate()+'</strong><small>'+escapeHtml(month)+'</small><i aria-hidden="true"></i></button>'}
+    function refreshMealStrip(){for(const button of mealDateStrip.querySelectorAll('[data-meal-jump]')){const key=button.dataset.mealJump,count=['lunch','dinner'].filter(type=>Boolean(extras.weekPlan[key+':'+type])).length;button.classList.toggle('selected',key===mealStripSelected);button.classList.toggle('no-meal',count===0);button.classList.toggle('one-meal',count===1);button.setAttribute('aria-pressed',String(key===mealStripSelected))}}
+    mealDateStrip.innerHTML=Array.from({length:mealStripLast-mealStripFirst+1},(_,i)=>mealStripButton(mealStripFirst+i)).join('');
+    requestAnimationFrame(()=>{const current=mealDateStrip.querySelector('[data-meal-jump="'+today+'"]');if(current)mealDateStrip.scrollLeft=current.offsetLeft-mealDateStrip.offsetLeft-12});
+    mealDateStrip.addEventListener('scroll',()=>{if(mealDateStrip.scrollWidth-mealDateStrip.clientWidth-mealDateStrip.scrollLeft<550){const from=mealStripLast+1;mealStripLast+=28;mealDateStrip.insertAdjacentHTML('beforeend',Array.from({length:28},(_,i)=>mealStripButton(from+i)).join(''))}if(mealDateStrip.scrollLeft<350){const widthBefore=mealDateStrip.scrollWidth;mealStripFirst-=28;mealDateStrip.insertAdjacentHTML('afterbegin',Array.from({length:28},(_,i)=>mealStripButton(mealStripFirst+i)).join(''));mealDateStrip.scrollLeft+=mealDateStrip.scrollWidth-widthBefore}}, {passive:true});
+    mealDateStrip.addEventListener('click',event=>{const button=event.target.closest('[data-meal-jump]');if(!button)return;const key=button.dataset.mealJump,selected=new Date(key+'T12:00:00');mealStripSelected=key;mealPlanWeekOffset=Math.round((Date.UTC(selected.getFullYear(),selected.getMonth(),selected.getDate())-Date.UTC(mealDateAnchor.getFullYear(),mealDateAnchor.getMonth(),mealDateAnchor.getDate()))/86400000/7);simpleMealEditingSlot='';renderMealPlanner();document.querySelector('[data-simple-meal-day="'+key+'"]')?.scrollIntoView({behavior:'smooth',block:'start'})});
     function renderSimpleMealPlanner(){
       const start=mealPlanMonday(),end=new Date(start);end.setDate(start.getDate()+6);
       document.querySelector('#mealWeekTitle').textContent=mealPlanMonthTitle(start,end);
       document.querySelector('#mealWeekPlan').innerHTML=Array.from({length:7},(_,index)=>{
         const day=new Date(start);day.setDate(start.getDate()+index);
         const date=dateKey(day.getFullYear(),day.getMonth(),day.getDate()),weekday=new Intl.DateTimeFormat('fr-FR',{weekday:'long'}).format(day),shortDate=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'}).format(day);
-        return '<section class="meal-plan-day simple-meal-day '+(date===today?'today-plan':'')+'"><div class="meal-plan-date"><strong>'+escapeHtml(weekday)+'</strong><small>'+escapeHtml(shortDate)+'</small></div>'+['lunch','dinner'].map(type=>{
+        return '<section class="meal-plan-day simple-meal-day '+(date===today?'today-plan':'')+'" data-simple-meal-day="'+date+'"><div class="meal-plan-date"><strong>'+escapeHtml(weekday)+'</strong><small>'+escapeHtml(shortDate)+'</small></div>'+['lunch','dinner'].map(type=>{
           const key=date+':'+type,value=extras.weekPlan[key]||'',existing=extras.mealDetails[key],name=mealDetailSummary(existing)||mealPlanName(value)||String(meals[key]||''),source=String(extras.mealSources?.[key]||''),known=simpleMealSources.includes(source),selected=source?(known?source:'Autre'):'',other=source&&!known?source:'',editing=simpleMealEditingSlot===key;
           const options='<option value="">Sans source</option>'+simpleMealSources.map(item=>'<option value="'+item+'"'+(item===selected?' selected':'')+'>'+item+'</option>').join('');
           return '<div class="simple-meal-slot"><span>'+(type==='lunch'?'Midi':'Soir')+'</span><div class="simple-meal-value"'+(editing?' hidden':'')+'><div>'+(value||name?'<strong>'+escapeHtml(name||'Pas de repas à prévoir')+'</strong>':'<small>Aucun repas saisi</small>')+(source?'<small>'+escapeHtml(source)+'</small>':'')+'</div><button type="button" data-simple-meal-edit="'+key+'" aria-label="'+(value?'Modifier':'Ajouter')+' le repas du '+escapeHtml(weekday)+' '+(type==='lunch'?'midi':'soir')+'">'+(value?'✎':'＋')+'</button></div><form class="simple-meal-editor" data-simple-meal-form="'+key+'"'+(editing?'':' hidden')+'><label>Nom de la recette ou du repas<input name="mealName" maxlength="160" value="'+escapeHtml(value==='__none'?'':name)+'" placeholder="Ex. : curry de légumes" required></label><label>Où trouver la recette ? <span class="ng">(facultatif)</span><select name="mealSource">'+options+'</select></label><label class="simple-meal-other"'+(selected==='Autre'?'':' hidden')+'>Préciser la source<input name="mealOther" maxlength="100" value="'+escapeHtml(other)+'" placeholder="Appli, livre, site…"></label><div class="simple-meal-actions"><button class="primary" type="submit">Enregistrer</button><button class="simple-meal-cancel" type="button" data-simple-meal-cancel>Annuler</button>'+(value?'<button class="simple-meal-remove" type="button" data-simple-meal-remove="'+key+'">Supprimer</button>':'')+'</div></form></div>'
         }).join('')+'</section>'
-      }).join('')
+      }).join('');refreshMealStrip()
     }
     renderMealPlanner=renderSimpleMealPlanner;
     const simpleMealPlan=document.querySelector('#mealWeekPlan');
