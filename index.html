@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v120 : interface harmonisée et formulaire Repas fiabilisé -->
+<!-- Version v121 : stockage local protégé pendant la synchronisation Agenda -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -930,7 +930,10 @@
     function snapshotScore(payload){try{return Object.keys(payload?.meals||{}).length+Object.keys(payload?.goalsState?.checks||{}).length+Math.max(0,(payload?.goalsState?.goals||[]).length-starterGoals.length)*2+(payload?.organizer?.tasks||[]).length*3+(payload?.organizer?.appointments||[]).length*3+(payload?.organizer?.purchases||[]).length*3+(payload?.organizer?.notes||[]).length*3+Object.keys(payload?.organizer?.sleep||{}).length+(payload?.extras?.shopping||[]).length*2+(payload?.extras?.journal||[]).length*2+(payload?.extras?.recipes||[]).length*3+Object.keys(payload?.extras?.weekPlan||{}).length}catch{return 0}}
     function readSafetyBackup(){try{return JSON.parse(localStorage.getItem(dataBackupKey)||'null')}catch{return null}}
     function readBackupHistory(){try{const value=JSON.parse(localStorage.getItem(dataHistoryKey)||'[]');return Array.isArray(value)?value:[]}catch{return[]}}
-    function writeSafetyBackup(reason){const snapshot=safetySnapshot(reason),previous=readSafetyBackup();if(snapshot&&snapshotScore(snapshot)>=snapshotScore(previous))localStorage.setItem(dataBackupKey,JSON.stringify(snapshot))}
+    let localBackupStorageFull=false;
+    function isLocalStorageQuotaError(error){return error?.name==='QuotaExceededError'||error?.code===22||error?.code===1014||(!error?.status&&/quota has been exceeded|storage quota exceeded/i.test(String(error?.message||'')))}
+    function calendarStorageWarning(){return 'Stockage de l’iPhone saturé : exportez vos données depuis « Sauvegardes ». Ne supprimez pas les données du site.'}
+    function writeSafetyBackup(reason){const snapshot=safetySnapshot(reason),previous=readSafetyBackup();if(snapshot&&snapshotScore(snapshot)>=snapshotScore(previous))try{localStorage.setItem(dataBackupKey,JSON.stringify(snapshot));localBackupStorageFull=false}catch(error){if(!isLocalStorageQuotaError(error))throw error;localBackupStorageFull=true;console.warn('La sauvegarde locale précédente est conservée : espace insuffisant.')}}
     function writeBackupHistory(reason){const snapshot=safetySnapshot(reason);if(!snapshot)return;const history=readBackupHistory(),last=history[0];if(last&&Date.now()-Number(last.savedAt)<60000&&snapshotScore(last)===snapshotScore(snapshot))return;history.unshift(snapshot);while(history.length>8)history.pop();try{localStorage.setItem(dataHistoryKey,JSON.stringify(history))}catch{history.pop();try{localStorage.setItem(dataHistoryKey,JSON.stringify(history))}catch{}}}
     function touchLocalRevision(){if(deferAutomaticImportRevision)return;localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('local-change');writeBackupHistory('automatic')}
     function cleanCloudData(){const clean=JSON.parse(JSON.stringify({goalsState:state,meals,organizer,extras,clientUpdatedAt:localRevision||Date.now()}));clean.updatedAt=cloudSync.serverTime();return clean}
@@ -1298,16 +1301,16 @@
       let synced=0,deleted=0,failed=0,changed=false;
       try{
         organizer.calendarMirrors||={};const entries=mirrorCalendarItems().map(mirrorCalendarPayload),active=new Set(entries.map(entry=>entry.key));
-        for(const entry of entries){try{if(await syncGoogleMirrorItem(entry)){synced++;changed=true}}catch(error){failed++;console.error(error);if(error.code==='calendar-auth-required'||error.status===403)throw error}}
+        for(const entry of entries){try{if(await syncGoogleMirrorItem(entry)){synced++;changed=true}}catch(error){failed++;console.error(error);if(error.code==='calendar-auth-required'||error.status===403||isLocalStorageQuotaError(error))throw error}}
         for(const key of [...(organizer.calendarMirrorDeletions||[])]){
           if(active.has(key)){organizer.calendarMirrorDeletions=organizer.calendarMirrorDeletions.filter(value=>value!==key);changed=true;persistCalendarMirrors();continue}
           const record=organizer.calendarMirrors[key];if(!record){organizer.calendarMirrorDeletions=organizer.calendarMirrorDeletions.filter(value=>value!==key);changed=true;persistCalendarMirrors();continue}
           try{const path='events/'+encodeURIComponent(record.eventId),current=await calendarApi(path);if(current.extendedProperties?.private?.siteMirrorKey===key){await calendarApi(path+'?sendUpdates=none',{method:'DELETE'});deleted++}delete organizer.calendarMirrors[key];organizer.calendarMirrorDeletions=organizer.calendarMirrorDeletions.filter(value=>value!==key);changed=true;persistCalendarMirrors()}
-          catch(error){if(error.status===404||error.status===410){delete organizer.calendarMirrors[key];organizer.calendarMirrorDeletions=organizer.calendarMirrorDeletions.filter(value=>value!==key);changed=true;persistCalendarMirrors()}else{failed++;console.error(error);if(error.code==='calendar-auth-required'||error.status===403)throw error}}
+          catch(error){if(error.status===404||error.status===410){delete organizer.calendarMirrors[key];organizer.calendarMirrorDeletions=organizer.calendarMirrorDeletions.filter(value=>value!==key);changed=true;persistCalendarMirrors()}else{failed++;console.error(error);if(error.code==='calendar-auth-required'||error.status===403||isLocalStorageQuotaError(error))throw error}}
         }
         const parts=[];if(synced)parts.push(synced+' élément'+(synced>1?'s':'')+' ajouté'+(synced>1?'s':'')+' ou modifié'+(synced>1?'s':''));if(deleted)parts.push(deleted+' retiré'+(deleted>1?'s':''));if(failed)parts.push(failed+' en attente');setCalendarSyncStatus(parts.join(' · ')||'Agenda Google à jour',failed?'error':'connected')
-      }catch(error){console.error(error);if(error.code!=='calendar-auth-required')setCalendarSyncStatus(error.message||'Synchronisation incomplète','error')}
-      finally{if(changed)saveOrganizer();calendarSync.syncing=false;const status=document.querySelector('#calendarSyncStatus'),connected=Boolean(calendarSync.token&&Date.now()<calendarSync.expiresAt);setCalendarSyncStatus(status.lastElementChild.textContent,connected?(status.classList.contains('error')?'error':'connected'):'')}
+      }catch(error){console.error(error);if(error.code!=='calendar-auth-required')setCalendarSyncStatus(isLocalStorageQuotaError(error)?calendarStorageWarning():error.message||'Synchronisation incomplète','error')}
+      finally{if(changed)try{saveOrganizer()}catch(error){console.error(error);if(isLocalStorageQuotaError(error))setCalendarSyncStatus(calendarStorageWarning(),'error');else setCalendarSyncStatus(error.message||'Enregistrement local impossible','error')}calendarSync.syncing=false;const status=document.querySelector('#calendarSyncStatus'),connected=Boolean(calendarSync.token&&Date.now()<calendarSync.expiresAt);setCalendarSyncStatus(localBackupStorageFull&&!status.classList.contains('error')?calendarStorageWarning():status.lastElementChild.textContent,connected?(status.classList.contains('error')||localBackupStorageFull?'error':'connected'):'')}
     }
     function markAppointmentForCalendar(item){item.calendarDirty=true;if(calendarSync.token&&Date.now()<calendarSync.expiresAt)setTimeout(()=>syncAllCalendarAppointments(),0);else setCalendarSyncStatus('Rendez-vous enregistré — reconnectez seulement pour le synchroniser','')}
     function queueCalendarDeletion(item){if(!item?.googleEventId)return;organizer.calendarDeletions||=[];if(!organizer.calendarDeletions.some(x=>x.googleEventId===item.googleEventId))organizer.calendarDeletions.push({googleEventId:item.googleEventId,title:item.title||'',queuedAt:new Date().toISOString()});if(calendarSync.token&&Date.now()<calendarSync.expiresAt)setTimeout(()=>syncAllCalendarAppointments(),0);else setCalendarSyncStatus('Suppression enregistrée — reconnectez seulement pour prévenir Google','')}
