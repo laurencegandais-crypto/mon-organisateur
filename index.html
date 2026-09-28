@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v127 : agendas alignés et aujourd’hui en première date visible -->
+<!-- Version v130 : formulaire de courses placé sous la liste sur mobile -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -837,6 +837,11 @@
       #panelAgenda .board-head .nav button,#panelMeals .meal-week-card>.meal-tool-head .nav button,#panelMeals .meal-week-card>.meal-tool-head .nav button:not(#mealWeekToday){display:grid;place-items:center;min-width:44px;width:44px;height:44px;padding:0;color:#fff;background:transparent;border:0;border-radius:10px;box-shadow:none;font-size:1.45rem;font-weight:600;line-height:1}
       #panelAgenda .board-head .nav .agenda-today,#panelMeals .meal-week-card>.meal-tool-head .nav #mealWeekToday{min-width:44px;width:44px;height:44px;color:#fff;background:transparent;border:0;font-size:1rem;font-weight:750}
       #panelMeals .meal-selected-heading.agenda-day-heading{color:var(--brand-bordeaux);font-size:1.07rem;font-weight:800}
+      #panelAgenda .board-head .nav button.agenda-mode{display:none}
+      :is(#panelAgenda .agenda-mobile-dates,#panelMeals .meal-date-strip){scroll-padding-left:12px}
+      :is(#panelAgenda .agenda-mobile-dates,#panelMeals .meal-date-strip) .cal-cell{scroll-snap-align:start}
+      #panelShopping .capture-grid>section:has(#shoppingList){order:0}
+      #panelShopping .capture-grid>aside:has(#shoppingForm){order:1}
     }
 </style>
 </head>
@@ -2241,7 +2246,7 @@ Servir le curry avec le riz.`,notes:''}
     document.querySelector('#mealWeekPlan').addEventListener('change',event=>{const select=event.target.closest('[data-meal-plan]');if(!select||select.value!=='__custom')return;event.preventDefault();event.stopImmediatePropagation();const key=select.dataset.mealPlan;if(!mealChoiceOriginals.has(key))mealChoiceOriginals.set(key,extras.weekPlan[key]||'');mealChoiceDrafts.set(key,'__custom');mealEditingSlots.add(key);extras.weekPlan[key]='__text:'+(extras.weekPlan[key]?.startsWith('__text:')?extras.weekPlan[key].slice(7):'');renderMealPlannerWithoutJump(key,'[data-meal-plan-text="'+key+'"]')},true);
     document.querySelector('#mealWeekPlan').addEventListener('click',event=>{const edit=event.target.closest('[data-meal-edit-slot]'),detail=event.target.closest('[data-meal-detail-toggle]');if(!edit&&!detail)return;event.preventDefault();event.stopImmediatePropagation();const key=(edit?.dataset.mealEditSlot||detail.dataset.mealDetailToggle);if(!mealChoiceOriginals.has(key))mealChoiceOriginals.set(key,extras.weekPlan[key]||'');mealEditingSlots.add(key);if(edit){renderMealPlannerWithoutJump(key,'[data-meal-plan="'+key+'"]');return}const current=extras.mealDetails[key],currentText=extras.weekPlan[key]?.startsWith('__text:')?extras.weekPlan[key].slice(7):'';if(current?.detailed){const summary=mealDetailSummary(current);delete extras.mealDetails[key];extras.weekPlan[key]='__text:'+summary;renderMealPlannerWithoutJump(key,'[data-meal-plan-text="'+key+'"]')}else{extras.mealDetails[key]={detailed:true,starter:'',main:currentText,dessert:''};extras.weekPlan[key]='__text:'+currentText;renderMealPlannerWithoutJump(key,'[data-meal-course-key="'+key+'"][data-meal-course="main"]')}},true);
     document.querySelector('#mealWeekPlan').addEventListener('click',event=>{const button=event.target.closest('[data-meal-remove-slot]');if(!button)return;event.preventDefault();event.stopImmediatePropagation();const key=button.dataset.mealRemoveSlot,prefix='menu:'+key+':',affected=extras.shopping.filter(item=>!item.done&&Object.keys(item.recipeSources||{}).some(source=>source.startsWith(prefix))).length;button.disabled=true;mealChoiceDrafts.delete(key);mealChoiceOriginals.delete(key);delete extras.mealDetails[key];mealEditingSlots.delete(key);saveMealPlanSlot(key,'');pendingShoppingUndo=null;showToast(affected?'Repas supprimé · '+affected+' article'+(affected>1?'s':'')+' de courses recalculé'+(affected>1?'s':''):'Repas supprimé · courses vérifiées')},true);
-    function contextualAdd(event){event.preventDefault();event.stopImmediatePropagation();const active=document.body.dataset.activeTab||document.querySelector('.tab[aria-selected="true"]')?.dataset.tab,quick={agenda:'appointment',meals:'meal'},forms={goals:'composer',shopping:'shoppingForm',journal:'journalForm',notes:'noteForm'};document.body.dataset.activeTab=active||'agenda';if(active==='recipes'){showRecipeEditorV75();return}if(active==='purchases'){resetPurchaseForm();openPurchaseSheet();return}if(active==='todos'){resetTaskForm();openTaskSheet();return}if(quick[active]){if(active==='agenda')editingAppointmentId='';openQuickSheet(quick[active])}else if(forms[active])openMobileForm(forms[active]);else openQuickSheet('appointment')}
+    function contextualAdd(event){event.preventDefault();event.stopImmediatePropagation();const active=document.body.dataset.activeTab||document.querySelector('.tab[aria-selected="true"]')?.dataset.tab,quick={agenda:'appointment'},forms={goals:'composer',shopping:'shoppingForm',journal:'journalForm',notes:'noteForm'};document.body.dataset.activeTab=active||'agenda';if(active==='recipes'){showRecipeEditorV75();return}if(active==='purchases'){resetPurchaseForm();openPurchaseSheet();return}if(active==='todos'){resetTaskForm();openTaskSheet();return}if(active==='meals'){openCompleteMealForm();return}if(quick[active]){if(active==='agenda')editingAppointmentId='';openQuickSheet(quick[active])}else if(forms[active])openMobileForm(forms[active]);else openQuickSheet('appointment')}
     document.querySelector('#floatingAdd').addEventListener('click',contextualAdd,true);
     const activeTabObserver=new MutationObserver(()=>{const active=document.querySelector('.tab[aria-selected="true"]')?.dataset.tab;if(active)document.body.dataset.activeTab=active});activeTabObserver.observe(document.querySelector('.tabs'),{subtree:true,attributes:true,attributeFilter:['aria-selected']});document.body.dataset.activeTab=document.querySelector('.tab[aria-selected="true"]')?.dataset.tab||'agenda';
     const agendaNav=document.querySelector('#panelAgenda .nav');if(agendaNav&&!agendaNav.querySelector('.agenda-today')){const todayButton=document.createElement('button');todayButton.type='button';todayButton.className='agenda-today';todayButton.textContent='À';todayButton.title="Aujourd’hui";todayButton.setAttribute('aria-label',"Revenir à aujourd’hui");todayButton.addEventListener('click',()=>{agendaWeekOffset=0;agendaYear=now.getFullYear();agendaMonth=now.getMonth();agendaSelectedDate=today;renderAgenda({centerSelectedDay:true});showToast("Retour à aujourd’hui")});agendaNav.insertBefore(todayButton,agendaNav.lastElementChild)}
@@ -2362,6 +2367,15 @@ Servir le curry avec le riz.`,notes:''}
       }).join('');refreshMealStrip()
     }
     renderMealPlanner=renderSimpleMealPlanner;
+    function openCompleteMealForm(){
+      const openForm=document.querySelector('#mealWeekPlan [data-simple-meal-form]:not([hidden])');
+      if(openForm){openForm.scrollIntoView({behavior:'smooth',block:'center'});return}
+      const date=mealStripSelected||today,type=['lunch','dinner'].find(slot=>!extras.weekPlan[date+':'+slot]&&!meals[date+':'+slot]);
+      if(!type){showToast('Midi et soir sont déjà renseignés · utilisez le crayon pour modifier');return}
+      simpleMealEditingSlot=date+':'+type;renderMealPlanner();
+      requestAnimationFrame(()=>{const form=simpleMealPlan.querySelector('[data-simple-meal-form="'+simpleMealEditingSlot+'"]');if(!form)return;form.scrollIntoView({behavior:'smooth',block:'center'});const input=form.querySelector('[name="mealName"]');try{input?.focus({preventScroll:true})}catch{input?.focus()}})
+    }
+    document.querySelector('[data-quick-type="meal"]').addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();mealStripSelected=today;openTab('meals');openCompleteMealForm()},true);
     for(const [selector,step] of [['#mealWeekPrevious',-1],['#mealWeekNext',1]])document.querySelector(selector).addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();const date=new Date(mealStripSelected+'T12:00:00'),target=new Date(date.getFullYear(),date.getMonth()+step,1);mealStripSelected=dateKey(target.getFullYear(),target.getMonth(),1);simpleMealEditingSlot='';ensureMealStripDate(mealStripSelected);renderMealPlanner();requestAnimationFrame(()=>showDateAtStripStart(mealDateStrip,'data-meal-jump',mealStripSelected))},true);
     const simpleMealPlan=document.querySelector('#mealWeekPlan');
     simpleMealPlan.addEventListener('click',event=>{
