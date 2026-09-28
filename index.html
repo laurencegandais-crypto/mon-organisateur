@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v130 : formulaire de courses placé sous la liste sur mobile -->
+<!-- Version v131 : récurrence hebdomadaire explicite pour les rendez-vous -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -1110,7 +1110,19 @@
     const money=value=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(Number(value)||0);
     function niceDate(value){return value?new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',year:'numeric'}).format(new Date(value+'T12:00:00')):'Sans date'}
     const recurrenceLabels={daily:'Tous les jours',weekly:'Chaque semaine',monthly:'Chaque mois'},weekdayLabels=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-    function recurrenceFieldsHtml(prefix){return '<label class="recurrence-toggle"><input id="'+prefix+'Recurring" type="checkbox"> '+(prefix==='appointment'||prefix==='quickAppointment'?'Rendez-vous récurrent':'Tâche récurrente')+'</label><div id="'+prefix+'RecurrenceDetails" hidden><label class="field">Type de récurrence<select id="'+prefix+'Recurrence"><option value="daily">Jour(s)</option><option value="weekly">Semaine(s)</option><option value="monthly">Mois</option></select></label><label class="field recurrence-interval">Répéter tous les<div><input id="'+prefix+'RecurrenceInterval" type="number" min="1" max="52" value="1"><span id="'+prefix+'RecurrenceUnit">jours</span></div></label><label class="field" id="'+prefix+'WeeklyDayField" hidden>Jour de la semaine<select id="'+prefix+'WeeklyDay"><option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="0">Dimanche</option></select></label><label class="field" id="'+prefix+'MonthlyDayField" hidden>Jour du mois<input id="'+prefix+'MonthlyDay" type="number" min="1" max="31" value="1"></label><label class="field">Fin de la récurrence<input id="'+prefix+'RecurrenceEnd" type="date"></label></div>'}
+    function recurrenceFieldsHtml(prefix){
+      const appointment=prefix==='appointment'||prefix==='quickAppointment';
+      return `<label class="recurrence-toggle"><input id="${prefix}Recurring" type="checkbox"> ${appointment?'Rendez-vous récurrent':'Tâche récurrente'}</label>
+        <div id="${prefix}RecurrenceDetails" hidden>
+          <label class="field">Fréquence<select id="${prefix}Recurrence">
+            <option value="daily">Chaque jour</option><option value="weekly"${appointment?' selected':''}>Chaque semaine</option><option value="monthly">Chaque mois</option>
+          </select></label>
+          <label class="field recurrence-interval"><span>Intervalle</span><div><input id="${prefix}RecurrenceInterval" type="number" min="1" ${appointment?'':'max="52" '}inputmode="numeric" value="1"><span id="${prefix}RecurrenceUnit">${appointment?'semaine':'jour'}</span></div></label>
+          <label class="field" id="${prefix}WeeklyDayField" hidden>Jour de la semaine<select id="${prefix}WeeklyDay"><option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="0">Dimanche</option></select></label>
+          <label class="field" id="${prefix}MonthlyDayField" hidden>Jour du mois<input id="${prefix}MonthlyDay" type="number" min="1" max="31" value="1"></label>
+          <label class="field">Fin de la récurrence<input id="${prefix}RecurrenceEnd" type="date"></label>
+        </div>`
+    }
     function updateRecurrenceControls(prefix){const recurring=document.querySelector('#'+prefix+'Recurring')?.checked,type=document.querySelector('#'+prefix+'Recurrence')?.value,details=document.querySelector('#'+prefix+'RecurrenceDetails');if(details)details.hidden=!recurring;const weekly=document.querySelector('#'+prefix+'WeeklyDayField'),monthly=document.querySelector('#'+prefix+'MonthlyDayField'),unit=document.querySelector('#'+prefix+'RecurrenceUnit'),interval=Number(document.querySelector('#'+prefix+'RecurrenceInterval')?.value)||1;if(weekly)weekly.hidden=!recurring||type!=='weekly';if(monthly)monthly.hidden=!recurring||type!=='monthly';if(unit)unit.textContent=type==='daily'?(interval>1?'jours':'jour'):type==='weekly'?(interval>1?'semaines':'semaine'):'mois'}
     function syncRecurrenceDayWithStart(prefix){
       const inputId={task:'taskDeadline',quickTask:'quickDate',appointment:'appointmentDate',quickAppointment:'quickDate'}[prefix];
@@ -1254,7 +1266,7 @@
     }
     function fillAppointmentRecurrence(prefix,item){
       const recurring=document.querySelector('#'+prefix+'Recurring');recurring.checked=Boolean(item.recurrence);
-      document.querySelector('#'+prefix+'Recurrence').value=['daily','weekly','monthly'].includes(item.recurrence)?item.recurrence:'daily';
+      document.querySelector('#'+prefix+'Recurrence').value=['daily','weekly','monthly'].includes(item.recurrence)?item.recurrence:'weekly';
       document.querySelector('#'+prefix+'RecurrenceInterval').value=String(Math.max(1,Number(item.recurrenceInterval)||1));
       document.querySelector('#'+prefix+'RecurrenceEnd').value=item.recurrenceEnd||'';
       syncRecurrenceDayWithStart(prefix);updateRecurrenceControls(prefix);
