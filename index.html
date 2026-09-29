@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v140 : déplacement individuel des récurrences -->
+<!-- Version v141 : action de déplacement visible dans le calendrier PC -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -877,6 +877,9 @@
       #panelMeals .simple-meal-editor{grid-column:2;width:min(100%,620px);margin:0;padding:18px;background:#fff;border:1px solid #dfe4eb;border-radius:14px}
     }
     .occurrence-move{font-size:1.25rem;font-weight:750}
+    #panelAgenda .cal-occurrence{display:flex;align-items:stretch;gap:3px;min-width:0;margin-top:4px}
+    #panelAgenda .cal-occurrence .cal-event{flex:1;min-width:0;margin-top:0}
+    #panelAgenda .cal-occurrence .occurrence-move{flex:0 0 30px;min-width:30px;padding:0;color:var(--brand-bordeaux);background:#f4e7ea;border:1px solid #ead6dd;border-radius:7px;cursor:pointer}
     #panelTodos .todo-content .occurrence-move{min-width:44px;min-height:44px;color:var(--brand-bordeaux);background:#f4e7ea;border-color:#ead6dd}
     .occurrence-dialog[hidden]{display:none}
     .occurrence-dialog{position:fixed;z-index:150;inset:0;display:grid;place-items:center;padding:18px;background:rgb(2 27 57 / 55%)}
@@ -1317,7 +1320,7 @@
       closeOccurrenceEditor();renderTasks();renderAgenda();renderToday();showToast('Cette date a été modifiée · les autres occurrences restent en place');
     });
     function agendaEntries(){const appointments=organizer.appointments.flatMap(appointmentAgendaEntries),purchases=organizer.purchases.filter(x=>x.kind==='bought'&&x.date),purchaseEntries=purchases.map(x=>({id:x.id,date:x.date,type:'purchase',theme:'Achats',color:'#781325',label:'Achat · '+[x.brand,x.name].filter(Boolean).join(' ')+' · '+money(Number(x.price)||0)})),dailyTotals=Object.entries(purchases.reduce((totals,x)=>{totals[x.date]=(totals[x.date]||0)+(Number(x.price)||0);return totals},{})).map(([date,total])=>({id:'purchase-total-'+date,date,type:'purchase-total',color:'#781325',label:'Total achats du jour · '+money(total)}));return [...appointments,...organizer.tasks.flatMap(taskAgendaEntries),...purchaseEntries,...dailyTotals,...agendaMealEntries()].map(item=>({...item,color:agendaTypeColor(item.type)})).sort(agendaChronologicalCompare)}
-    function agendaEvent(x){const style=' style="--event-color:'+escapeHtml(x.color||'#9aa5a0')+'"';return x.isAppointment?'<button class="cal-event colored-event '+x.type+'" type="button" data-appointment-edit="'+escapeHtml(x.id)+'"'+style+' title="Modifier · '+escapeHtml(x.label)+'">'+escapeHtml(x.label)+'</button>':'<span class="cal-event colored-event '+x.type+'"'+style+' title="'+escapeHtml(x.label)+'">'+escapeHtml(x.label)+'</span>'}
+    function agendaEvent(x){const style=' style="--event-color:'+escapeHtml(x.color||'#9aa5a0')+'"',event=x.isAppointment?'<button class="cal-event colored-event '+x.type+'" type="button" data-appointment-edit="'+escapeHtml(x.id)+'"'+style+' title="Modifier · '+escapeHtml(x.label)+'">'+escapeHtml(x.label)+'</button>':'<span class="cal-event colored-event '+x.type+'"'+style+' title="'+escapeHtml(x.label)+'">'+escapeHtml(x.label)+'</span>';if(!x.occurrenceOriginalDate)return event;const type=x.isAppointment?'appointment':'task';return '<div class="cal-occurrence">'+event+'<button class="occurrence-move" type="button" data-occurrence-move="'+type+'" data-occurrence-id="'+escapeHtml(String(x.id))+'" data-occurrence-original="'+escapeHtml(x.occurrenceOriginalDate)+'" aria-label="Changer uniquement cette date : '+escapeHtml(x.label)+'" title="Changer uniquement cette date">↪</button></div>'}
     const agendaMobileAnchor=new Date(today+'T12:00:00');let agendaMobileFirst=-14,agendaMobileLast=42,agendaMobileRenderedDate='';
     function agendaMobileIndex(key){const date=new Date(key+'T12:00:00');return Math.round((Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())-Date.UTC(agendaMobileAnchor.getFullYear(),agendaMobileAnchor.getMonth(),agendaMobileAnchor.getDate()))/86400000)}
     function showDateAtStripStart(strip,attribute,date){const selected=strip.querySelector('['+attribute+'="'+date+'"]');if(!selected)return;const gutter=parseFloat(getComputedStyle(strip).paddingLeft)||0;strip.scrollLeft+=selected.getBoundingClientRect().left-strip.getBoundingClientRect().left-gutter}
