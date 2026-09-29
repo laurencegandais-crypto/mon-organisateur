@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v138 : repas lisibles et cohérents avec l’agenda sur ordinateur -->
+<!-- Version v139 : navigation des repas par semaine sur ordinateur -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -851,6 +851,8 @@
       #panelMeals .meal-week-card>.meal-tool-head{display:flex;align-items:center;min-height:86px;margin:0;padding:18px 28px;color:#fff;background:var(--brand-bordeaux)}
       #panelMeals .meal-week-card>.meal-tool-head h2{margin:0;color:#fff;font-size:clamp(1.5rem,2.3vw,1.85rem)!important;font-weight:750;line-height:1.15;text-transform:capitalize}
       #panelMeals .meal-week-card>.meal-tool-head .nav{display:flex;align-items:center}
+      #panelMeals .meal-week-card>.meal-tool-head .nav button:not(#mealWeekToday){display:grid;place-items:center;width:44px;min-width:44px;height:44px;padding:0;color:#fff;background:transparent;border:0;border-radius:10px;font-size:1.6rem;line-height:1}
+      #panelMeals .meal-week-card>.meal-tool-head .nav button:not(#mealWeekToday):hover{background:rgb(255 255 255 / 16%)}
       #panelMeals #mealWeekToday{color:#fff;background:rgb(255 255 255 / 16%);border:1px solid rgb(255 255 255 / 45%)}
       #panelMeals .meal-date-strip{display:flex;gap:8px;margin:0;padding:15px 24px 17px;overflow-x:auto;overflow-y:hidden;background:#fff;border-bottom:1px solid #efe7ed;scroll-snap-type:x proximity;scroll-padding-left:24px;scrollbar-width:none}
       #panelMeals .meal-date-strip::-webkit-scrollbar{display:none}
@@ -2467,7 +2469,10 @@ Servir le curry avec le riz.`,notes:''}
       requestAnimationFrame(()=>{const form=simpleMealPlan.querySelector('[data-simple-meal-form="'+simpleMealEditingSlot+'"]');if(!form)return;form.scrollIntoView({behavior:'smooth',block:'center'});const input=form.querySelector('[name="mealName"]');try{input?.focus({preventScroll:true})}catch{input?.focus()}})
     }
     document.querySelector('[data-quick-type="meal"]').addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();mealStripSelected=today;openTab('meals');openCompleteMealForm()},true);
-    for(const [selector,step] of [['#mealWeekPrevious',-1],['#mealWeekNext',1]])document.querySelector(selector).addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();const date=new Date(mealStripSelected+'T12:00:00'),target=new Date(date.getFullYear(),date.getMonth()+step,1);mealStripSelected=dateKey(target.getFullYear(),target.getMonth(),1);simpleMealEditingSlot='';ensureMealStripDate(mealStripSelected);renderMealPlanner();requestAnimationFrame(()=>showDateAtStripStart(mealDateStrip,'data-meal-jump',mealStripSelected))},true);
+    const mealDesktopNavigation=()=>window.matchMedia('(min-width:1025px) and (any-pointer:fine)').matches;
+    function labelMealNavigation(){for(const [selector,label] of [['#mealWeekPrevious','précédente'],['#mealWeekNext','suivante']])document.querySelector(selector).setAttribute('aria-label',(mealDesktopNavigation()?'Semaine ':'Mois ')+label)}
+    labelMealNavigation();window.addEventListener('resize',labelMealNavigation);
+    for(const [selector,step] of [['#mealWeekPrevious',-1],['#mealWeekNext',1]])document.querySelector(selector).addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();const date=new Date(mealStripSelected+'T12:00:00'),target=mealDesktopNavigation()?new Date(date.getFullYear(),date.getMonth(),date.getDate()+step*7,12):new Date(date.getFullYear(),date.getMonth()+step,1,12);mealStripSelected=dateKey(target.getFullYear(),target.getMonth(),target.getDate());simpleMealEditingSlot='';ensureMealStripDate(mealStripSelected);renderMealPlanner();requestAnimationFrame(()=>showDateAtStripStart(mealDateStrip,'data-meal-jump',mealStripSelected))},true);
     const simpleMealPlan=document.querySelector('#mealWeekPlan');
     simpleMealPlan.addEventListener('click',event=>{
       const edit=event.target.closest('[data-simple-meal-edit]'),cancel=event.target.closest('[data-simple-meal-cancel]'),remove=event.target.closest('[data-simple-meal-remove]');
