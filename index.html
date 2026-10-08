@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v145 : horaires et modification des occurrences de rendez-vous -->
+<!-- Version v146 : ouvrir le calendrier uniquement sur demande -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -1330,7 +1330,7 @@
       }
       return result
     }
-    document.body.insertAdjacentHTML('beforeend','<div class="occurrence-dialog" id="occurrenceDialog" role="dialog" aria-modal="true" aria-labelledby="occurrenceDialogTitle" hidden><form class="occurrence-dialog-card" id="occurrenceForm"><h2 id="occurrenceDialogTitle">Changer cette date</h2><p id="occurrenceDialogDescription"></p><label>Nouvelle date<input type="date" id="occurrenceNewDate" required></label><div id="occurrenceTimeFields" hidden style="display:grid;gap:12px;margin-top:12px"><label>Heure de début<input type="time" id="occurrenceStart"></label><label>Heure de fin<input type="time" id="occurrenceEnd"></label><span class="hint">Laissez les deux heures vides pour une journée entière.</span></div><div class="occurrence-dialog-actions"><button class="primary" type="submit">Enregistrer</button><button class="secondary" id="occurrenceCancel" type="button">Annuler</button><button id="occurrenceRestore" type="button" hidden>Rétablir la date initiale</button></div></form></div>');
+    document.body.insertAdjacentHTML('beforeend','<div class="occurrence-dialog" id="occurrenceDialog" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="occurrenceDialogTitle" hidden><form class="occurrence-dialog-card" id="occurrenceForm"><h2 id="occurrenceDialogTitle">Changer cette date</h2><p id="occurrenceDialogDescription"></p><label>Nouvelle date<input type="date" id="occurrenceNewDate" required></label><div id="occurrenceTimeFields" hidden style="display:grid;gap:12px;margin-top:12px"><label>Heure de début<input type="time" id="occurrenceStart"></label><label>Heure de fin<input type="time" id="occurrenceEnd"></label><span class="hint">Laissez les deux heures vides pour une journée entière.</span></div><div class="occurrence-dialog-actions"><button class="primary" type="submit">Enregistrer</button><button class="secondary" id="occurrenceCancel" type="button">Annuler</button><button id="occurrenceRestore" type="button" hidden>Rétablir la date initiale</button></div></form></div>');
     const occurrenceDialog=document.querySelector('#occurrenceDialog');let activeOccurrence=null;
     function closeOccurrenceEditor(){occurrenceDialog.hidden=true;activeOccurrence=null;document.body.style.overflow=''}
     function openOccurrenceEditor(type,id,original){
@@ -1344,7 +1344,7 @@
       const times=occurrenceTimes(item,original);document.querySelector('#occurrenceStart').value=times.start;document.querySelector('#occurrenceEnd').value=times.end;
       document.querySelector('#occurrenceRestore').textContent=type==='appointment'?'Rétablir la date et les heures de la série':'Rétablir la date initiale';
       document.querySelector('#occurrenceRestore').hidden=occurrenceDate(item,original)===original&&(type!=='appointment'||!item.occurrenceTimes?.[original]);
-      occurrenceDialog.hidden=false;document.body.style.overflow='hidden';document.querySelector('#occurrenceNewDate').focus();
+      occurrenceDialog.hidden=false;document.body.style.overflow='hidden';occurrenceDialog.focus({preventScroll:true});
     }
     document.addEventListener('click',event=>{const move=event.target.closest('[data-occurrence-move]');if(move){event.preventDefault();event.stopPropagation();openOccurrenceEditor(move.dataset.occurrenceMove,move.dataset.occurrenceId,move.dataset.occurrenceOriginal)}});
     document.querySelector('#occurrenceCancel').addEventListener('click',closeOccurrenceEditor);
