@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v145 : horaires et modification des occurrences de rendez-vous -->
+<!-- Version v147 : choix HelloFresh dans les menus et calendrier sur demande -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -1330,7 +1330,7 @@
       }
       return result
     }
-    document.body.insertAdjacentHTML('beforeend','<div class="occurrence-dialog" id="occurrenceDialog" role="dialog" aria-modal="true" aria-labelledby="occurrenceDialogTitle" hidden><form class="occurrence-dialog-card" id="occurrenceForm"><h2 id="occurrenceDialogTitle">Changer cette date</h2><p id="occurrenceDialogDescription"></p><label>Nouvelle date<input type="date" id="occurrenceNewDate" required></label><div id="occurrenceTimeFields" hidden style="display:grid;gap:12px;margin-top:12px"><label>Heure de début<input type="time" id="occurrenceStart"></label><label>Heure de fin<input type="time" id="occurrenceEnd"></label><span class="hint">Laissez les deux heures vides pour une journée entière.</span></div><div class="occurrence-dialog-actions"><button class="primary" type="submit">Enregistrer</button><button class="secondary" id="occurrenceCancel" type="button">Annuler</button><button id="occurrenceRestore" type="button" hidden>Rétablir la date initiale</button></div></form></div>');
+    document.body.insertAdjacentHTML('beforeend','<div class="occurrence-dialog" id="occurrenceDialog" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="occurrenceDialogTitle" hidden><form class="occurrence-dialog-card" id="occurrenceForm"><h2 id="occurrenceDialogTitle">Changer cette date</h2><p id="occurrenceDialogDescription"></p><label>Nouvelle date<input type="date" id="occurrenceNewDate" required></label><div id="occurrenceTimeFields" hidden style="display:grid;gap:12px;margin-top:12px"><label>Heure de début<input type="time" id="occurrenceStart"></label><label>Heure de fin<input type="time" id="occurrenceEnd"></label><span class="hint">Laissez les deux heures vides pour une journée entière.</span></div><div class="occurrence-dialog-actions"><button class="primary" type="submit">Enregistrer</button><button class="secondary" id="occurrenceCancel" type="button">Annuler</button><button id="occurrenceRestore" type="button" hidden>Rétablir la date initiale</button></div></form></div>');
     const occurrenceDialog=document.querySelector('#occurrenceDialog');let activeOccurrence=null;
     function closeOccurrenceEditor(){occurrenceDialog.hidden=true;activeOccurrence=null;document.body.style.overflow=''}
     function openOccurrenceEditor(type,id,original){
@@ -1344,7 +1344,7 @@
       const times=occurrenceTimes(item,original);document.querySelector('#occurrenceStart').value=times.start;document.querySelector('#occurrenceEnd').value=times.end;
       document.querySelector('#occurrenceRestore').textContent=type==='appointment'?'Rétablir la date et les heures de la série':'Rétablir la date initiale';
       document.querySelector('#occurrenceRestore').hidden=occurrenceDate(item,original)===original&&(type!=='appointment'||!item.occurrenceTimes?.[original]);
-      occurrenceDialog.hidden=false;document.body.style.overflow='hidden';document.querySelector('#occurrenceNewDate').focus();
+      occurrenceDialog.hidden=false;document.body.style.overflow='hidden';occurrenceDialog.focus({preventScroll:true});
     }
     document.addEventListener('click',event=>{const move=event.target.closest('[data-occurrence-move]');if(move){event.preventDefault();event.stopPropagation();openOccurrenceEditor(move.dataset.occurrenceMove,move.dataset.occurrenceId,move.dataset.occurrenceOriginal)}});
     document.querySelector('#occurrenceCancel').addEventListener('click',closeOccurrenceEditor);
@@ -2546,6 +2546,23 @@ Servir le curry avec le riz.`,notes:''}
     /* v103 : le planning conserve les anciennes recettes, mais la saisie est un nom libre et une source facultative. */
     let simpleMealEditingSlot='';
     const simpleMealSources=['HelloFresh','Quitoque','Cookidoo','Cookomix','WeChef','Autre'];
+
+    /* Choix HelloFresh : commande du 15 octobre 2026. Aucun repas n’est ajouté automatiquement. */
+    const helloFreshMealChoices=[{"id":"hf-20261015-orzotto","name":"Orzotto crémeux des bois & fromage frais","minutes":25},{"id":"hf-20261015-chow-mein","name":"Chow mein : nouilles sautées aux crevettes","minutes":20},{"id":"hf-20261015-chevre","name":"La Gourmande : chèvre chaud, pomme & lardons","minutes":25},{"id":"hf-20261015-chili","name":"Chili con carne de Cyril Lignac","minutes":35},{"id":"hf-20261015-orzo","name":"Orzo « Rojo » au poulet & chorizo","minutes":25},{"id":"hf-20261015-veloute","name":"Velouté lentilles-coco & crevettes","minutes":40}];
+    function helloFreshMealOptions(date,name,source){
+      if(date<'2026-10-15')return '';
+      const selected=source==='HelloFresh'?helloFreshMealChoices.find(item=>item.name===name)?.id:'';
+      return '<label>Mes plats HelloFresh · commande du 15 octobre<select name="mealHelloFresh"><option value="">Saisir un autre repas ou choisir un plat…</option>'+helloFreshMealChoices.map(item=>'<option value="'+item.id+'"'+(item.id===selected?' selected':'')+'>'+escapeHtml(item.name)+' · '+item.minutes+' min</option>').join('')+'</select></label>';
+    }
+    function applyHelloFreshMealChoice(form){
+      const recipe=helloFreshMealChoices.find(item=>item.id===form.querySelector('[name="mealHelloFresh"]')?.value);
+      if(!recipe)return;
+      form.querySelector('[name="mealName"]').value=recipe.name;
+      form.querySelector('[name="mealMinutes"]').value=String(recipe.minutes);
+      form.querySelector('[name="mealSource"]').value='HelloFresh';
+      form.querySelector('.simple-meal-other').hidden=true;
+    }
+
     const simpleMealAppliances=['Thermomix','Air Fryer','Four','Plaques','Cookeo','Autre'];
     /* Une seule bande de dates, sur le modèle de l’agenda mobile. */
     document.querySelectorAll('#panelMeals .meal-date-strip').forEach(strip=>strip.remove());
@@ -2590,6 +2607,7 @@ Servir le curry avec le riz.`,notes:''}
               ${meta?`<small>${escapeHtml(meta)}</small>`:''}
             </div><button type="button" data-simple-meal-edit="${key}" aria-label="${value?'Modifier':'Ajouter'} le repas du ${escapeHtml(weekday)} ${type==='lunch'?'midi':'soir'}">${value?'✎':'＋'}</button></div>
             <form class="simple-meal-editor" data-simple-meal-form="${key}"${editing?'':' hidden'}>
+              ${helloFreshMealOptions(date,name,source)}
               <label>Nom de la recette ou du repas<input name="mealName" maxlength="160" value="${escapeHtml(value==='__none'?'':name)}" placeholder="Ex. : curry de légumes" required></label>
               <label>Où trouver la recette ? <span class="ng">(facultatif)</span><select name="mealSource">${options}</select></label>
               <label class="simple-meal-other"${selected==='Autre'?'':' hidden'}>Préciser la source<input name="mealOther" maxlength="100" value="${escapeHtml(other)}" placeholder="Appli, livre, site…"></label>
@@ -2628,6 +2646,7 @@ Servir le curry avec le riz.`,notes:''}
     },true);
     simpleMealPlan.addEventListener('change',event=>{
       const form=event.target.closest('[data-simple-meal-form]');if(!form)return;
+      if(event.target.name==='mealHelloFresh')applyHelloFreshMealChoice(form);
       if(event.target.name==='mealSource')form.querySelector('.simple-meal-other').hidden=event.target.value!=='Autre';
       if(event.target.name==='mealAppliance'&&event.target.value==='Autre')form.querySelector('.simple-meal-appliance-other').hidden=!event.target.checked;
     });
