@@ -1,0 +1,16 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');const html=fs.readFileSync(__dirname+'/../index.html','utf8');new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1]);
+const extras={weekPlan:{},mealSources:{},mealPlanningInfo:{}},meals={};let saves=0,fail=false;
+const c={extras,meals,Date,Set,escapeHtml:s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),mealPlanName:s=>s.startsWith('__text:')?s.slice(7):s,persistLocal:()=>{if(fail)throw Error('quota');saves++},previewExtrasKey:'extras',scheduleCloudSave(){},showToast(){}};vm.createContext(c);vm.runInContext(html.slice(html.indexOf('    const helloFreshMealChoices='),html.indexOf('    const simpleMealAppliances=')),c);
+const count=(key='2026-10-16:dinner')=>c.helloFreshAvailableChoices(key).length;const name='Chili con carne de Cyril Lignac',id='hf-20261015-chili',key='2026-10-15:dinner',recipe={id,name};
+assert.equal(count(),6);assert.equal(c.helloFreshMealOptions('2026-10-14','','','2026-10-14:lunch'),'');
+extras.weekPlan[key]='__text:'+name;meals[key]=name;extras.mealSources[key]='HelloFresh';assert.equal(count(),5);assert.equal(count(key),6);assert(c.helloFreshOptionList(key,name,'HelloFresh').includes('value="'+id+'" selected'));
+delete extras.weekPlan[key];delete meals[key];delete extras.mealSources[key];assert.equal(count(),6);
+assert(c.setHelloFreshChoiceHidden(id,true));assert.equal(count(),5);assert(c.helloFreshManagerRows().includes('Remettre'));assert.equal(saves,1);assert(c.setHelloFreshChoiceHidden(id,false));assert.equal(count(),6);
+extras.weekPlan[key]='__text:'+name;meals[key]=name;extras.mealSources[key]='HelloFresh';c.setHelloFreshChoiceHidden(id,true);assert.equal(extras.weekPlan[key],'__text:'+name);assert.equal(count(key),6);assert.equal(count(),5);
+delete extras.weekPlan[key];delete meals[key];delete extras.mealSources[key];assert.equal(count(),5);c.setHelloFreshChoiceHidden(id,false);assert.equal(count(),6);
+// Stable identity supports stored metadata and does not depend on the display name.
+extras.weekPlan[key]='__text:Mon chili';extras.mealPlanningInfo[key]={helloFreshId:id};assert.equal(count(),5);delete extras.weekPlan[key];delete extras.mealPlanningInfo[key];assert.equal(count(),6);
+fail=true;const before=JSON.stringify(extras.helloFreshChoiceVisibility);assert.equal(c.setHelloFreshChoiceHidden(id,true),false);assert.equal(JSON.stringify(extras.helloFreshChoiceVisibility),before);assert.equal(count(),6);fail=false;
+const untouched=JSON.stringify({extras,meals});c.helloFreshMealOptions('2026-10-15','','',key);assert.equal(JSON.stringify({extras,meals}),untouched);
+assert(html.includes('min-height:44px;min-width:80px'));assert(html.includes('white-space:normal;overflow-wrap:anywhere'));assert(html.includes('Saisir un autre repas'));assert(html.includes("helloFreshPlannedSlots(chosenHelloFresh).some(slot=>slot!==key)"));assert(html.includes('helloFreshChoiceVisibility:{...(oldExtras.helloFreshChoiceVisibility||{}),...(extras.helloFreshChoiceVisibility||{})}'));
+console.log('OK : syntaxe, anciens repas détectés, plat planifié masqué, choix actuel conservé, suppression libère le plat, retrait/rétablissement manuel, planning conservé, identité stable, échec de sauvegarde, rendu sans écriture, saisie libre et styles mobiles.');
