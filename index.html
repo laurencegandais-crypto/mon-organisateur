@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v147 : choix HelloFresh dans les menus et calendrier sur demande -->
+<!-- Version v148 : gérer les plats HelloFresh disponibles dans les menus -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -920,6 +920,14 @@
       #panelAgenda .agenda-month-grid .month-marker{width:100%;height:auto;min-height:17px;overflow:hidden;border-radius:3px;color:#fff;font-size:.65rem;white-space:nowrap;text-align:left}
       #panelAgenda .agenda-month-grid .month-marker-label{display:block;padding:2px 3px;overflow:hidden;text-overflow:ellipsis}
     }
+
+    #panelMeals .hf-choice-manager{min-width:0;border:1px solid #dce2ea;border-radius:11px;padding:0 10px;background:#fff}
+    #panelMeals .hf-choice-manager summary{min-height:44px;padding:12px 0;color:#781325;font-weight:750;cursor:pointer;font-size:.85rem}
+    #panelMeals .hf-choice-manager p{font-size:.8rem;line-height:1.5;color:#536071}
+    #panelMeals .hf-choice-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:12px 0;border-top:1px solid #e6e9ee}
+    #panelMeals .hf-choice-row strong{display:block;font-size:.86rem;line-height:1.45;white-space:normal;overflow-wrap:anywhere;color:#021b39}
+    #panelMeals .hf-choice-row small{display:block;margin-top:5px;font-size:.78rem;line-height:1.4;color:#536071}
+    #panelMeals .hf-choice-row button{min-height:44px;min-width:80px;padding:9px 10px;border:1px solid #ead5da;border-radius:10px;background:#f4e7ea;color:#781325;font-size:.82rem;font-weight:750}
 </style>
 </head>
 <body>
@@ -2470,7 +2478,7 @@ Servir le curry avec le riz.`,notes:''}
     const saveMessages={appointmentForm:'Rendez-vous enregistré',composer:'Objectif ajouté',themeCreator:'Thématique ajoutée',mealComposer:'Repas enregistré',taskForm:'Tâche enregistrée',journalForm:'Journal enregistré',quickForm:'Élément enregistré'};
     Object.entries(saveMessages).forEach(([id,message])=>document.querySelector('#'+id)?.addEventListener('submit',event=>{if(localSaveSequence-event.localSaveStart<(id==='journalForm'?2:1))return;showToast(message+' sur cet iPhone');if(!window.matchMedia('(max-width:1024px), (max-width:1366px) and (any-pointer:coarse)').matches)return;const card=document.querySelector('#'+id)?.closest('.mobile-collapsible');setTimeout(()=>{card?.classList.remove('form-open');const toggle=card?.querySelector('.form-toggle');if(toggle){toggle.setAttribute('aria-expanded','false');toggle.textContent='+ '+mobileForms[id]}},250)}));
     function mergeById(current=[],backup=[]){const result=[...current],ids=new Set(result.map(x=>x?.id).filter(Boolean));backup.forEach(item=>{if(item?.id&&!ids.has(item.id)){result.push(item);ids.add(item.id)}else if(!item?.id&&!result.some(x=>JSON.stringify(x)===JSON.stringify(item)))result.push(item)});return result}
-    function mergeDataSnapshot(backup){if(!backup||snapshotScore(backup)===0)return false;cloudSync.applying=true;if(backup.goalsState){state={themes:(state.themes?.length>=backup.goalsState.themes?.length?state.themes:backup.goalsState.themes)||defaultThemes,goals:mergeById(state.goals,backup.goalsState.goals),checks:{...(backup.goalsState.checks||{}),...(state.checks||{})}}}meals={...(backup.meals||{}),...(meals||{})};const oldOrganizer=backup.organizer||{};organizer={...oldOrganizer,...organizer,tasks:mergeById(organizer.tasks,oldOrganizer.tasks),appointments:mergeById(organizer.appointments,oldOrganizer.appointments),purchases:mergeById(organizer.purchases,oldOrganizer.purchases),notes:mergeById(organizer.notes,oldOrganizer.notes),sleep:{...(oldOrganizer.sleep||{}),...(organizer.sleep||{})}};const oldExtras=backup.extras||{};extras={...oldExtras,...extras,inbox:mergeById(extras.inbox,oldExtras.inbox),shopping:mergeById(extras.shopping,oldExtras.shopping),reserves:mergeById(extras.reserves,oldExtras.reserves),journal:mergeById(extras.journal,oldExtras.journal),favorites:mergeById(extras.favorites,oldExtras.favorites),recipes:mergeById(extras.recipes,oldExtras.recipes),recipeThemes:mergeById(extras.recipeThemes,oldExtras.recipeThemes),weekPlan:{...(oldExtras.weekPlan||{}),...(extras.weekPlan||{})},mealSources:{...(oldExtras.mealSources||{}),...(extras.mealSources||{})},mealDetails:{...(oldExtras.mealDetails||{}),...(extras.mealDetails||{})},mealPlanningInfo:{...(oldExtras.mealPlanningInfo||{}),...(extras.mealPlanningInfo||{})}};localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));localStorage.setItem(organizerKey,JSON.stringify(organizer));localStorage.setItem(previewExtrasKey,JSON.stringify(extras));cloudSync.applying=false;writeSafetyBackup('after-merge');writeBackupHistory('after-merge');renderControls();render();renderMeals();renderTasks();renderPurchases();renderNotes();renderExtras();renderAgenda();renderToday();setSyncStatus('Données fusionnées — synchronisation Google en attente');showToast('Les données ont été fusionnées');scheduleCloudSave();return true}
+    function mergeDataSnapshot(backup){if(!backup||snapshotScore(backup)===0)return false;cloudSync.applying=true;if(backup.goalsState){state={themes:(state.themes?.length>=backup.goalsState.themes?.length?state.themes:backup.goalsState.themes)||defaultThemes,goals:mergeById(state.goals,backup.goalsState.goals),checks:{...(backup.goalsState.checks||{}),...(state.checks||{})}}}meals={...(backup.meals||{}),...(meals||{})};const oldOrganizer=backup.organizer||{};organizer={...oldOrganizer,...organizer,tasks:mergeById(organizer.tasks,oldOrganizer.tasks),appointments:mergeById(organizer.appointments,oldOrganizer.appointments),purchases:mergeById(organizer.purchases,oldOrganizer.purchases),notes:mergeById(organizer.notes,oldOrganizer.notes),sleep:{...(oldOrganizer.sleep||{}),...(organizer.sleep||{})}};const oldExtras=backup.extras||{};extras={...oldExtras,...extras,inbox:mergeById(extras.inbox,oldExtras.inbox),shopping:mergeById(extras.shopping,oldExtras.shopping),reserves:mergeById(extras.reserves,oldExtras.reserves),journal:mergeById(extras.journal,oldExtras.journal),favorites:mergeById(extras.favorites,oldExtras.favorites),recipes:mergeById(extras.recipes,oldExtras.recipes),recipeThemes:mergeById(extras.recipeThemes,oldExtras.recipeThemes),weekPlan:{...(oldExtras.weekPlan||{}),...(extras.weekPlan||{})},mealSources:{...(oldExtras.mealSources||{}),...(extras.mealSources||{})},mealDetails:{...(oldExtras.mealDetails||{}),...(extras.mealDetails||{})},mealPlanningInfo:{...(oldExtras.mealPlanningInfo||{}),...(extras.mealPlanningInfo||{})},helloFreshChoiceVisibility:{...(oldExtras.helloFreshChoiceVisibility||{}),...(extras.helloFreshChoiceVisibility||{})}};localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));localStorage.setItem(storageKey,JSON.stringify(state));localStorage.setItem(mealStorageKey,JSON.stringify(meals));localStorage.setItem(organizerKey,JSON.stringify(organizer));localStorage.setItem(previewExtrasKey,JSON.stringify(extras));cloudSync.applying=false;writeSafetyBackup('after-merge');writeBackupHistory('after-merge');renderControls();render();renderMeals();renderTasks();renderPurchases();renderNotes();renderExtras();renderAgenda();renderToday();setSyncStatus('Données fusionnées — synchronisation Google en attente');showToast('Les données ont été fusionnées');scheduleCloudSave();return true}
     function restoreSafetyBackup(){const backup=readSafetyBackup();if(!backup||snapshotScore(backup)===0){alert('Aucune sauvegarde contenant des données n’a été trouvée sur cet appareil.');return}if(confirm('Fusionner la dernière sauvegarde avec les données actuellement visibles ?'))mergeDataSnapshot(backup)}
     async function exportAllData(){const snapshot=safetySnapshot('export'),content=JSON.stringify(snapshot,null,2),filename='faciliter-mon-quotidien-'+today+'.json',file=new File([content],filename,{type:'application/json'});try{if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'Sauvegarde de mes données'});return}}catch{}const link=document.createElement('a');link.href=URL.createObjectURL(file);link.download=filename;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);showToast('Sauvegarde exportée')}
     async function exportBackupArchive(){
@@ -2549,18 +2557,48 @@ Servir le curry avec le riz.`,notes:''}
 
     /* Choix HelloFresh : commande du 15 octobre 2026. Aucun repas n’est ajouté automatiquement. */
     const helloFreshMealChoices=[{"id":"hf-20261015-orzotto","name":"Orzotto crémeux des bois & fromage frais","minutes":25},{"id":"hf-20261015-chow-mein","name":"Chow mein : nouilles sautées aux crevettes","minutes":20},{"id":"hf-20261015-chevre","name":"La Gourmande : chèvre chaud, pomme & lardons","minutes":25},{"id":"hf-20261015-chili","name":"Chili con carne de Cyril Lignac","minutes":35},{"id":"hf-20261015-orzo","name":"Orzo « Rojo » au poulet & chorizo","minutes":25},{"id":"hf-20261015-veloute","name":"Velouté lentilles-coco & crevettes","minutes":40}];
-    function helloFreshMealOptions(date,name,source){
-      if(date<'2026-10-15')return '';
+    function helloFreshPlannedSlots(recipe){
+      const keys=new Set([...Object.keys(extras.weekPlan||{}),...Object.keys(meals||{})]);
+      return [...keys].filter(key=>{
+        const value=extras.weekPlan?.[key],name=value?mealPlanName(value):String(meals[key]||'');
+        if(!name)return false;
+        return extras.mealPlanningInfo?.[key]?.helloFreshId===recipe.id||(extras.mealSources?.[key]==='HelloFresh'&&name===recipe.name);
+      });
+    }
+    function helloFreshAvailableChoices(key){
+      return helloFreshMealChoices.filter(recipe=>{
+        const slots=helloFreshPlannedSlots(recipe);
+        return slots.includes(key)||(!extras.helloFreshChoiceVisibility?.[recipe.id]?.hidden&&!slots.length);
+      });
+    }
+    function helloFreshOptionList(key,name,source){
       const selected=source==='HelloFresh'?helloFreshMealChoices.find(item=>item.name===name)?.id:'';
-      return '<label>Mes plats HelloFresh · commande du 15 octobre<select name="mealHelloFresh"><option value="">Saisir un autre repas ou choisir un plat…</option>'+helloFreshMealChoices.map(item=>'<option value="'+item.id+'"'+(item.id===selected?' selected':'')+'>'+escapeHtml(item.name)+' · '+item.minutes+' min</option>').join('')+'</select></label>';
+      return '<option value="">Saisir un autre repas ou choisir un plat…</option>'+helloFreshAvailableChoices(key).map(item=>'<option value="'+item.id+'"'+(item.id===selected?' selected':'')+'>'+escapeHtml(item.name)+' · '+item.minutes+' min</option>').join('');
+    }
+    function helloFreshManagerRows(){
+      return helloFreshMealChoices.map(recipe=>{
+        const hidden=Boolean(extras.helloFreshChoiceVisibility?.[recipe.id]?.hidden),planned=helloFreshPlannedSlots(recipe),status=[hidden?'Retiré des choix':'',planned.length?'Déjà au planning':''].filter(Boolean).join(' · ')||'Disponible';
+        return '<div class="hf-choice-row"><div><strong>'+escapeHtml(recipe.name)+'</strong><small>'+recipe.minutes+' min · '+status+'</small></div><button type="button" data-hf-choice-toggle="'+recipe.id+'" aria-label="'+(hidden?'Remettre dans les choix : ':'Retirer des choix : ')+escapeHtml(recipe.name)+'">'+(hidden?'Remettre':'Retirer')+'</button></div>';
+      }).join('');
+    }
+    function helloFreshMealOptions(date,name,source,key){
+      if(date<'2026-10-15')return '';
+      return '<label>Mes plats HelloFresh · commande du 15 octobre<select name="mealHelloFresh">'+helloFreshOptionList(key,name,source)+'</select></label><details class="hf-choice-manager"><summary>Gérer mes plats HelloFresh</summary><p>Un plat déjà au planning revient dans les choix si vous supprimez ce repas. « Retirer » le masque jusqu’à ce que vous le remettiez, sans supprimer vos repas prévus.</p><div class="hf-choice-list">'+helloFreshManagerRows()+'</div></details>';
     }
     function applyHelloFreshMealChoice(form){
-      const recipe=helloFreshMealChoices.find(item=>item.id===form.querySelector('[name="mealHelloFresh"]')?.value);
+      const key=form.dataset.simpleMealForm,recipe=helloFreshAvailableChoices(key).find(item=>item.id===form.querySelector('[name="mealHelloFresh"]')?.value);
       if(!recipe)return;
       form.querySelector('[name="mealName"]').value=recipe.name;
       form.querySelector('[name="mealMinutes"]').value=String(recipe.minutes);
       form.querySelector('[name="mealSource"]').value='HelloFresh';
       form.querySelector('.simple-meal-other').hidden=true;
+    }
+    function setHelloFreshChoiceHidden(id,hidden){
+      if(!helloFreshMealChoices.some(recipe=>recipe.id===id))return false;
+      const previous=extras.helloFreshChoiceVisibility;
+      extras.helloFreshChoiceVisibility={...(previous||{}),[id]:{hidden,updatedAt:Date.now()}};
+      try{persistLocal(previewExtrasKey,extras)}catch(error){extras.helloFreshChoiceVisibility=previous;showToast('Impossible d’enregistrer ce choix. Vos repas sont conservés.');return false}
+      scheduleCloudSave();return true;
     }
 
     const simpleMealAppliances=['Thermomix','Air Fryer','Four','Plaques','Cookeo','Autre'];
@@ -2607,7 +2645,7 @@ Servir le curry avec le riz.`,notes:''}
               ${meta?`<small>${escapeHtml(meta)}</small>`:''}
             </div><button type="button" data-simple-meal-edit="${key}" aria-label="${value?'Modifier':'Ajouter'} le repas du ${escapeHtml(weekday)} ${type==='lunch'?'midi':'soir'}">${value?'✎':'＋'}</button></div>
             <form class="simple-meal-editor" data-simple-meal-form="${key}"${editing?'':' hidden'}>
-              ${helloFreshMealOptions(date,name,source)}
+              ${helloFreshMealOptions(date,name,source,key)}
               <label>Nom de la recette ou du repas<input name="mealName" maxlength="160" value="${escapeHtml(value==='__none'?'':name)}" placeholder="Ex. : curry de légumes" required></label>
               <label>Où trouver la recette ? <span class="ng">(facultatif)</span><select name="mealSource">${options}</select></label>
               <label class="simple-meal-other"${selected==='Autre'?'':' hidden'}>Préciser la source<input name="mealOther" maxlength="100" value="${escapeHtml(other)}" placeholder="Appli, livre, site…"></label>
@@ -2644,6 +2682,20 @@ Servir le curry avec le riz.`,notes:''}
       if(!confirm('Supprimer ce repas du planning ?'))return;
       remove.disabled=true;const key=remove.dataset.simpleMealRemove;simpleMealEditingSlot='';delete extras.mealDetails[key];saveMealPlanSlot(key,'');renderMealPlanner();showToast('Repas supprimé')
     },true);
+    simpleMealPlan.addEventListener('click',event=>{
+      const button=event.target.closest('[data-hf-choice-toggle]');if(!button)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      const id=button.dataset.hfChoiceToggle,hidden=!extras.helloFreshChoiceVisibility?.[id]?.hidden;
+      if(!setHelloFreshChoiceHidden(id,hidden))return;
+      for(const form of simpleMealPlan.querySelectorAll('[data-simple-meal-form]')){
+        const select=form.querySelector('[name="mealHelloFresh"]');if(!select)continue;
+        const draft=select.value,name=form.querySelector('[name="mealName"]').value,source=form.querySelector('[name="mealSource"]').value;
+        select.innerHTML=helloFreshOptionList(form.dataset.simpleMealForm,name,source);
+        if([...select.options].some(option=>option.value===draft))select.value=draft;
+        form.querySelector('.hf-choice-list').innerHTML=helloFreshManagerRows();
+      }
+      showToast(hidden?'Plat retiré des choix · repas prévus conservés':'Plat remis dans les choix');
+    },true);
     simpleMealPlan.addEventListener('change',event=>{
       const form=event.target.closest('[data-simple-meal-form]');if(!form)return;
       if(event.target.name==='mealHelloFresh')applyHelloFreshMealChoice(form);
@@ -2654,10 +2706,13 @@ Servir le curry avec le riz.`,notes:''}
       const form=event.target.closest('[data-simple-meal-form]');if(!form)return;event.preventDefault();
       if(!form.reportValidity())return;
       const field=name=>form.querySelector('[name="'+name+'"]'),key=form.dataset.simpleMealForm,name=field('mealName').value.trim(),choice=field('mealSource').value,other=field('mealOther').value.trim();if(!name){field('mealName').focus();return}
-      const source=choice==='Autre'?(other||'Autre'):choice;extras.mealSources||={};if(source)extras.mealSources[key]=source;else delete extras.mealSources[key];
+      const source=choice==='Autre'?(other||'Autre'):choice,chosenHelloFresh=source==='HelloFresh'?helloFreshMealChoices.find(recipe=>recipe.name===name):null;
+      if(chosenHelloFresh&&helloFreshPlannedSlots(chosenHelloFresh).some(slot=>slot!==key)){alert('Ce plat HelloFresh est déjà prévu à un autre repas. Supprimez-le de ce repas pour le déplacer.');return}
+      extras.mealSources||={};if(source)extras.mealSources[key]=source;else delete extras.mealSources[key];
       const minutes=field('mealMinutes').value?Number(field('mealMinutes').value):0,otherAppliance=field('mealOtherAppliance').value.trim();
       const appliances=[...form.querySelectorAll('[name="mealAppliance"]:checked')].map(input=>input.value==='Autre'?(otherAppliance||'Autre'):input.value);
-      extras.mealPlanningInfo||={};extras.mealPlanningInfo[key]=minutes||appliances.length?{plannedMinutes:minutes,appliances}:null;
+      const helloFreshRecipe=source==='HelloFresh'?helloFreshMealChoices.find(recipe=>recipe.name===name):null;
+      extras.mealPlanningInfo||={};extras.mealPlanningInfo[key]=minutes||appliances.length||helloFreshRecipe?{plannedMinutes:minutes,appliances,...(helloFreshRecipe?{helloFreshId:helloFreshRecipe.id}:{})}:null;
       delete extras.mealDetails[key];simpleMealEditingSlot='';saveMealPlanSlot(key,'__text:'+name);renderMealPlanner();showToast('Repas enregistré')
     });
     renderMealPlanner();
