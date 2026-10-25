@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v150 : gérer les recettes HelloFresh restantes et les supprimer définitivement -->
+<!-- Version v152 : recalculer les rendez-vous suivants depuis une nouvelle date -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -883,11 +883,11 @@
     #panelTodos .todo-content .occurrence-move{min-width:44px;min-height:44px;color:var(--brand-bordeaux);background:#f4e7ea;border-color:#ead6dd}
     .occurrence-dialog[hidden]{display:none}
     .occurrence-dialog{position:fixed;z-index:150;inset:0;display:grid;place-items:center;padding:18px;background:rgb(2 27 57 / 55%)}
-    .occurrence-dialog-card{width:min(440px,100%);padding:22px;background:#fff;border-radius:19px;box-shadow:0 20px 60px rgb(2 27 57 / 25%)}
+    .occurrence-dialog-card{max-height:calc(100dvh - 36px);overflow-y:auto;overscroll-behavior:contain;width:min(440px,100%);padding:22px;background:#fff;border-radius:19px;box-shadow:0 20px 60px rgb(2 27 57 / 25%)}
     .occurrence-dialog-card h2{margin:0 0 8px;color:#021b39;font-size:1.35rem;font-weight:800}
     .occurrence-dialog-card p{margin:0 0 16px;color:#536071}
     .occurrence-dialog-card label{display:grid;gap:7px;color:#536071;font-weight:750}
-    .occurrence-dialog-card input{width:100%;min-height:48px;padding:9px 12px;color:#021b39;background:#fff;border:1px solid #dfe4eb;border-radius:10px;font-size:16px}
+    .occurrence-dialog-card :is(input,select){width:100%;min-height:48px;padding:9px 12px;color:#021b39;background:#fff;border:1px solid #dfe4eb;border-radius:10px;font-size:16px}
     .occurrence-dialog-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
     .occurrence-dialog-actions button{flex:1;min-height:44px;padding:9px 11px;border:0;border-radius:10px;font-weight:750}
     .occurrence-dialog-actions .primary{color:#fff;background:var(--brand-bordeaux)}
@@ -1244,7 +1244,7 @@
       document.querySelector('#taskProTotal').textContent=pendingTasks.filter(x=>taskType(x)==='Pro').length;
       document.querySelector('#taskPersoTotal').textContent=pendingTasks.filter(x=>taskType(x)!=='Pro').length;
       const matches=x=>todoFilter==='all'||taskType(x)===todoFilter,section=organizer.tasks.filter(matches),pending=section.filter(x=>!x.done).sort(taskManualOrder),done=section.filter(x=>x.done).sort((a,b)=>(b.completedAt||'').localeCompare(a.completedAt||'')),dueToday=pending.filter(x=>x.deadline&&occurrenceDate(x,x.deadline)<=today),later=pending.filter(x=>!x.deadline||occurrenceDate(x,x.deadline)>today),hasOverdue=dueToday.some(x=>occurrenceDate(x,x.deadline)<today);
-      const card=(x,group='')=>{const description=x.description||x.comment||'',type=taskType(x),date=occurrenceDate(x,x.deadline),overdue=!x.done&&date&&date<today,id=escapeHtml(String(x.id)),shortDate=date?new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'}).format(new Date(date+'T12:00:00')):'',times=x.startTime&&x.endTime?x.startTime+'–'+x.endTime:'';return '<article class="app-item todo-card todo-'+type.toLocaleLowerCase('fr')+(x.done?' done':'')+'" data-todo-group="'+group+'" data-task-id="'+id+'"><input class="todo-checkbox" type="checkbox" data-task-toggle="'+id+'" '+(x.done?'checked':'')+' aria-label="'+(x.done?'Remettre cette tâche à faire':'Marquer la tâche comme terminée')+'"><div class="todo-content"><strong class="item-title">'+escapeHtml(x.text)+'</strong>'+(description?'<div class="task-comment">'+escapeHtml(description)+'</div>':'')+'<div class="item-meta"><span class="todo-type-badge">'+(type==='Pro'?'Professionnel':'Personnel')+'</span>'+(shortDate?'<span class="todo-deadline '+(overdue?'overdue':'')+'">'+escapeHtml(shortDate)+'</span>':'')+(times?'<span>'+escapeHtml(times)+'</span>':'')+(x.recurrence?'<span class="todo-recurrence">'+escapeHtml(recurrenceMeta(x).replace(/^ · ↻ /,''))+'</span>':'')+(x.recurrence&&!x.done?'<button class="task-icon-action occurrence-move" type="button" data-occurrence-move="task" data-occurrence-id="'+id+'" data-occurrence-original="'+escapeHtml(x.deadline)+'" aria-label="Modifier uniquement cette occurrence" title="Changer cette date">↪</button>':'')+'</div></div><div class="todo-actions">'+(x.done?'':'<button class="todo-drag-handle" type="button" data-task-drag aria-label="Déplacer '+escapeHtml(x.text)+'" title="Glisser pour déplacer">⠿</button>')+'<button class="task-icon-action" type="button" data-task-edit="'+id+'" aria-label="Modifier la tâche" title="Modifier">'+compactEditIcon+'</button><button class="task-icon-action delete" type="button" data-task-delete="'+id+'" aria-label="Supprimer la tâche" title="Supprimer">×</button></div></article>'};
+      const card=(x,group='')=>{const description=x.description||x.comment||'',type=taskType(x),date=occurrenceDate(x,x.deadline),overdue=!x.done&&date&&date<today,id=escapeHtml(String(x.id)),shortDate=date?new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'}).format(new Date(date+'T12:00:00')):'',times=x.startTime&&x.endTime?x.startTime+'–'+x.endTime:'';return '<article class="app-item todo-card todo-'+type.toLocaleLowerCase('fr')+(x.done?' done':'')+'" data-todo-group="'+group+'" data-task-id="'+id+'"><input class="todo-checkbox" type="checkbox" data-task-toggle="'+id+'" '+(x.done?'checked':'')+' aria-label="'+(x.done?'Remettre cette tâche à faire':'Marquer la tâche comme terminée')+'"><div class="todo-content"><strong class="item-title">'+escapeHtml(x.text)+'</strong>'+(description?'<div class="task-comment">'+escapeHtml(description)+'</div>':'')+'<div class="item-meta"><span class="todo-type-badge">'+(type==='Pro'?'Professionnel':'Personnel')+'</span>'+(shortDate?'<span class="todo-deadline '+(overdue?'overdue':'')+'">'+escapeHtml(shortDate)+'</span>':'')+(times?'<span>'+escapeHtml(times)+'</span>':'')+(x.recurrence?'<span class="todo-recurrence">'+escapeHtml(recurrenceMeta(x).replace(/^ · ↻ /,''))+'</span>':'')+(x.recurrence&&!x.done?'<button class="task-icon-action occurrence-move" type="button" data-occurrence-move="task" data-occurrence-id="'+id+'" data-occurrence-original="'+escapeHtml(x.deadline)+'" aria-label="Modifier la date ou la répétition" title="Changer cette date">↪</button>':'')+'</div></div><div class="todo-actions">'+(x.done?'':'<button class="todo-drag-handle" type="button" data-task-drag aria-label="Déplacer '+escapeHtml(x.text)+'" title="Glisser pour déplacer">⠿</button>')+'<button class="task-icon-action" type="button" data-task-edit="'+id+'" aria-label="Modifier la tâche" title="Modifier">'+compactEditIcon+'</button><button class="task-icon-action delete" type="button" data-task-delete="'+id+'" aria-label="Supprimer la tâche" title="Supprimer">×</button></div></article>'};
       const group=(label,items,key)=>items.length?'<h3 class="todo-date-heading">'+label+' <span>'+items.length+'</span></h3>'+items.map(item=>card(item,key)).join(''):'';document.querySelector('#todoList').innerHTML=group(hasOverdue?'Aujourd’hui et en retard':'Aujourd’hui',dueToday,'today')+group('Autres jours ou sans date',later,'later')||'<p class="todo-empty">Aucune tâche à faire dans cette liste.</p>';document.querySelector('#doneList').innerHTML=done.map(card).join('')||'<p class="todo-empty">Aucune tâche terminée dans cette liste.</p>';document.querySelector('#doneTaskCount').textContent=done.length;document.querySelectorAll('[data-todo-section]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.todoSection===todoFilter)));enableTaskGestures();renderToday()
     }
     const defaultAgendaCategories=[['Personnel','#7295c8'],['Santé / Beauté','#d88aa0'],['Famille','#e0a15f'],['Maison','#77a88b'],['Pro','#8c78b2'],['Administratif','#89918c']];
@@ -1286,7 +1286,7 @@
         const meta=[(item.type==='task'||item.isAppointment)&&item.start&&item.end?'jusqu’à '+item.end:'',item.isAppointment?item.note||'':'',item.isAppointment&&item.recurrence?recurrenceMeta(item).replace(/^ · /,''):''].filter(Boolean).join(' · ');
         const style=' style="--event-color:'+escapeHtml(item.color||'#96516f')+'"',content='<strong>'+escapeHtml(label||'Sans titre')+'</strong>'+(meta?'<small>'+escapeHtml(meta)+'</small>':'');
         const id=escapeHtml(String(item.id));
-        const move=item.occurrenceOriginalDate?'<button type="button" class="agenda-day-delete occurrence-move" data-occurrence-move="'+(item.isAppointment?'appointment':'task')+'" data-occurrence-id="'+id+'" data-occurrence-original="'+escapeHtml(item.occurrenceOriginalDate)+'" aria-label="Modifier uniquement cette occurrence" title="Modifier uniquement cette occurrence">↪</button>':'';
+        const move=item.occurrenceOriginalDate?'<button type="button" class="agenda-day-delete occurrence-move" data-occurrence-move="'+(item.isAppointment?'appointment':'task')+'" data-occurrence-id="'+id+'" data-occurrence-original="'+escapeHtml(item.occurrenceOriginalDate)+'" aria-label="Modifier la date ou la répétition" title="Modifier la date ou la répétition">↪</button>':'';
         const card=item.isAppointment?'<div class="agenda-day-actions"><button type="button" class="agenda-day-card" data-appointment-edit="'+id+'"'+style+'>'+content+'</button>'+move+'<button type="button" class="agenda-day-delete" data-appointment-delete="'+id+'" aria-label="Supprimer le rendez-vous '+escapeHtml(label||'Sans titre')+'" title="Supprimer le rendez-vous"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v6M14 11v6"/></svg></button></div>':item.type==='task'?'<div class="agenda-day-actions"><div class="agenda-day-card"'+style+'>'+content+'</div>'+move+'</div>':'<div class="agenda-day-card"'+style+'>'+content+'</div>';
         return '<div class="agenda-day-row"><span class="agenda-day-time">'+escapeHtml(time)+'</span>'+card+'</div>'
       }).join(''):'<p class="agenda-day-empty">Aucun événement pour ce filtre.</p>')
@@ -1325,6 +1325,42 @@
       }
       return items;
     }
+
+    function appointmentRecurrenceDate(item,index){
+      const first=new Date(item.date+'T12:00:00'),interval=Math.max(1,Number(item.recurrenceInterval)||1);
+      const day=item.recurrence==='monthly'?monthlyDate(first.getFullYear(),first.getMonth()+index*interval,first.getDate()):new Date(first.getFullYear(),first.getMonth(),first.getDate()+index*interval*(item.recurrence==='weekly'?7:1),12);
+      return dateKey(day.getFullYear(),day.getMonth(),day.getDate());
+    }
+    function appointmentRecurrenceIndex(item,original){
+      const first=new Date(item.date+'T12:00:00'),day=new Date(original+'T12:00:00'),interval=Math.max(1,Number(item.recurrenceInterval)||1);
+      const days=(Date.parse(original+'T12:00:00Z')-Date.parse(item.date+'T12:00:00Z'))/86400000;
+      const index=item.recurrence==='monthly'?((day.getFullYear()-first.getFullYear())*12+day.getMonth()-first.getMonth())/interval:days/(interval*(item.recurrence==='weekly'?7:1));
+      return Number.isInteger(index)&&index>=0&&appointmentRecurrenceDate(item,index)===original?index:-1;
+    }
+    function reanchorAppointmentSeries(item,original,target,start,end){
+      const pivot=appointmentRecurrenceIndex(item,original);if(pivot<0)throw new Error('Cette occurrence ne correspond plus à la série. Rouvrez le rendez-vous.');
+      if(item.recurrenceEnd&&target>item.recurrenceEnd)throw new Error('La nouvelle date dépasse la fin de la récurrence. Modifiez d’abord la date de fin de la série.');
+      const past=appointmentAgendaEntries(item).filter(entry=>entry.occurrenceOriginalDate<original);
+      if(past.some(entry=>entry.date>=target))throw new Error('La nouvelle date doit rester après les rendez-vous précédents de cette série.');
+      const date=new Date(target+'T12:00:00'),span=Math.max(0,Math.round((Date.parse((item.endDate||item.date)+'T12:00:00Z')-Date.parse(item.date+'T12:00:00Z'))/86400000)),last=new Date(date);last.setDate(last.getDate()+span);
+      const next={...item,id:pivot?createId():item.id,date:target,endDate:dateKey(last.getFullYear(),last.getMonth(),last.getDate()),start,end,recurrenceDay:item.recurrence==='weekly'?String(date.getDay()):item.recurrence==='monthly'?String(date.getDate()):'',occurrenceMoves:{},occurrenceTimes:{},googleOccurrenceTimes:{},calendarDirty:true,calendarNotifyGuests:false,calendarRecurrenceVerified:false};
+      if(pivot)for(const key of ['googleEventId','googleEventLink','googleSyncedAt','googleUpdatedAt'])delete next[key];
+      const exceptions=new Set([...Object.keys(item.occurrenceMoves||{}),...Object.keys(item.occurrenceTimes||{})]);
+      for(const from of exceptions){
+        if(from<=original)continue;const index=appointmentRecurrenceIndex(item,from);if(index<0)continue;
+        const key=appointmentRecurrenceDate(next,index-pivot);
+        if(item.occurrenceMoves?.[from])next.occurrenceMoves[key]=item.occurrenceMoves[from];
+        if(item.occurrenceTimes?.[from])next.occurrenceTimes[key]={...item.occurrenceTimes[from]};
+      }
+      let earlier=null;
+      if(pivot){
+        const until=new Date(original+'T12:00:00');until.setDate(until.getDate()-1);
+        const previousOnly=values=>Object.fromEntries(Object.entries(values||{}).filter(([key])=>key<original));
+        earlier={...item,recurrenceEnd:dateKey(until.getFullYear(),until.getMonth(),until.getDate()),occurrenceMoves:previousOnly(item.occurrenceMoves),occurrenceTimes:previousOnly(item.occurrenceTimes),googleOccurrenceTimes:previousOnly(item.googleOccurrenceTimes),calendarDirty:true,calendarNotifyGuests:false,calendarRecurrenceVerified:false};
+      }
+      return{earlier,next};
+    }
+
     function taskAgendaEntries(task){
       if(task.done||!task.deadline)return[];
       const first=new Date(task.deadline+'T12:00:00');if(Number.isNaN(first.getTime()))return[];
@@ -1338,14 +1374,20 @@
       }
       return result
     }
-    document.body.insertAdjacentHTML('beforeend','<div class="occurrence-dialog" id="occurrenceDialog" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="occurrenceDialogTitle" hidden><form class="occurrence-dialog-card" id="occurrenceForm"><h2 id="occurrenceDialogTitle">Changer cette date</h2><p id="occurrenceDialogDescription"></p><label>Nouvelle date<input type="date" id="occurrenceNewDate" required></label><div id="occurrenceTimeFields" hidden style="display:grid;gap:12px;margin-top:12px"><label>Heure de début<input type="time" id="occurrenceStart"></label><label>Heure de fin<input type="time" id="occurrenceEnd"></label><span class="hint">Laissez les deux heures vides pour une journée entière.</span></div><div class="occurrence-dialog-actions"><button class="primary" type="submit">Enregistrer</button><button class="secondary" id="occurrenceCancel" type="button">Annuler</button><button id="occurrenceRestore" type="button" hidden>Rétablir la date initiale</button></div></form></div>');
+    document.body.insertAdjacentHTML('beforeend','<div class="occurrence-dialog" id="occurrenceDialog" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="occurrenceDialogTitle" hidden><form class="occurrence-dialog-card" id="occurrenceForm"><h2 id="occurrenceDialogTitle">Changer cette date</h2><p id="occurrenceDialogDescription"></p><p id="occurrenceScopeHint" class="hint"></p><label id="occurrenceScopeField" hidden>Appliquer la modification<select id="occurrenceScope"><option value="following">Ce RDV et les suivants</option><option value="single">Ce RDV seulement</option></select></label><label>Nouvelle date<input type="date" id="occurrenceNewDate" required></label><div id="occurrenceTimeFields" hidden style="display:grid;gap:12px;margin-top:12px"><label>Heure de début<input type="time" id="occurrenceStart"></label><label>Heure de fin<input type="time" id="occurrenceEnd"></label><span class="hint">Laissez les deux heures vides pour une journée entière.</span></div><div class="occurrence-dialog-actions"><button class="primary" type="submit">Enregistrer</button><button class="secondary" id="occurrenceCancel" type="button">Annuler</button><button id="occurrenceRestore" type="button" hidden>Rétablir la date initiale</button></div></form></div>');
     const occurrenceDialog=document.querySelector('#occurrenceDialog');let activeOccurrence=null;
     function closeOccurrenceEditor(){occurrenceDialog.hidden=true;activeOccurrence=null;document.body.style.overflow=''}
+    function updateOccurrenceScopeDescription(){
+      const description=document.querySelector('#occurrenceScopeHint');if(!description)return;
+      description.textContent=activeOccurrence?.type==='appointment'&&document.querySelector('#occurrenceScope').value==='following'?'Les rendez-vous suivants seront recalculés à partir de la nouvelle date, avec les heures indiquées. Les rendez-vous précédents sont conservés.':'Seul ce rendez-vous sera modifié. Les autres dates resteront identiques.';
+    }
     function openOccurrenceEditor(type,id,original){
       const item=(type==='appointment'?organizer.appointments:organizer.tasks).find(x=>sameId(x.id,id));
       if(!item||!['daily','weekly','monthly'].includes(item.recurrence)||!/^\d{4}-\d{2}-\d{2}$/.test(original))return;
       activeOccurrence={type,id,original};const format=key=>new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(key+'T12:00:00'));
-      document.querySelector('#occurrenceDialogDescription').textContent=(item.title||item.text)+' · '+format(original)+' — les autres dates resteront identiques.';
+      document.querySelector('#occurrenceDialogDescription').textContent=(item.title||item.text)+' · '+format(original);
+      document.querySelector('#occurrenceScopeField').hidden=type!=='appointment';document.querySelector('#occurrenceScope').value=type==='appointment'?'following':'single';
+      updateOccurrenceScopeDescription();
       document.querySelector('#occurrenceNewDate').value=occurrenceDate(item,original);
       document.querySelector('#occurrenceDialogTitle').textContent=type==='appointment'?'Modifier cette occurrence':'Changer cette date';
       document.querySelector('#occurrenceTimeFields').hidden=type!=='appointment';
@@ -1355,16 +1397,27 @@
       occurrenceDialog.hidden=false;document.body.style.overflow='hidden';occurrenceDialog.focus({preventScroll:true});
     }
     document.addEventListener('click',event=>{const move=event.target.closest('[data-occurrence-move]');if(move){event.preventDefault();event.stopPropagation();openOccurrenceEditor(move.dataset.occurrenceMove,move.dataset.occurrenceId,move.dataset.occurrenceOriginal)}});
+    document.querySelector('#occurrenceScope').addEventListener('change',updateOccurrenceScopeDescription);
     document.querySelector('#occurrenceCancel').addEventListener('click',closeOccurrenceEditor);
     occurrenceDialog.addEventListener('click',event=>{if(event.target===occurrenceDialog)closeOccurrenceEditor()});
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!occurrenceDialog.hidden)closeOccurrenceEditor()});
-    document.querySelector('#occurrenceRestore').addEventListener('click',()=>{if(!activeOccurrence)return;const {type,id,original}=activeOccurrence,item=(type==='appointment'?organizer.appointments:organizer.tasks).find(x=>sameId(x.id,id));if(!item)return;document.querySelector('#occurrenceNewDate').value=original;document.querySelector('#occurrenceStart').value=item.start||'';document.querySelector('#occurrenceEnd').value=item.end||'';document.querySelector('#occurrenceForm').requestSubmit()});
+    document.querySelector('#occurrenceRestore').addEventListener('click',()=>{if(!activeOccurrence)return;const {type,id,original}=activeOccurrence,item=(type==='appointment'?organizer.appointments:organizer.tasks).find(x=>sameId(x.id,id));if(!item)return;document.querySelector('#occurrenceScope').value='single';document.querySelector('#occurrenceNewDate').value=original;document.querySelector('#occurrenceStart').value=item.start||'';document.querySelector('#occurrenceEnd').value=item.end||'';document.querySelector('#occurrenceForm').requestSubmit()});
     document.querySelector('#occurrenceForm').addEventListener('submit',event=>{
       event.preventDefault();if(!activeOccurrence)return;
       const {type,id,original}=activeOccurrence,item=(type==='appointment'?organizer.appointments:organizer.tasks).find(x=>sameId(x.id,id)),target=document.querySelector('#occurrenceNewDate').value;
       if(!item||!/^\d{4}-\d{2}-\d{2}$/.test(target)||Number.isNaN(new Date(target+'T12:00:00').getTime()))return;
       const start=document.querySelector('#occurrenceStart').value,end=document.querySelector('#occurrenceEnd').value;
       if(type==='appointment'&&!appointmentTimesValid(start,end,target,(item.endDate||item.date)===item.date?target:'multiple'))return;
+      const following=type==='appointment'&&document.querySelector('#occurrenceScope').value==='following';
+      if(following){
+        let changes;try{changes=reanchorAppointmentSeries(item,original,target,start,end)}catch(error){alert(error.message);return}
+        const previousAppointments=organizer.appointments;
+        organizer.appointments=previousAppointments.flatMap(current=>sameId(current.id,id)?[...(changes.earlier?[changes.earlier]:[]),changes.next]:[current]);
+        try{saveOrganizer()}catch(error){organizer.appointments=previousAppointments;alert('Enregistrement impossible. La série précédente est conservée.');return}
+        if(changes.earlier)markAppointmentForCalendar(changes.earlier);markAppointmentForCalendar(changes.next);
+        agendaSelectedDate=target;const selected=new Date(target+'T12:00:00');agendaYear=selected.getFullYear();agendaMonth=selected.getMonth();
+        closeOccurrenceEditor();renderAgenda();renderToday();showToast('Rendez-vous suivants recalculés à partir du '+niceDate(target));return;
+      }
       const otherDates=(type==='appointment'?appointmentAgendaEntries(item):taskAgendaEntries(item)).filter(entry=>entry.occurrenceOriginalDate&&entry.occurrenceOriginalDate!==original).map(entry=>entry.date);
       if(otherDates.includes(target)){alert('Une autre occurrence de cette série est déjà prévue à cette date. Choisissez une autre date.');return}
       const previous={...(item.occurrenceMoves||{})},previousTimes={...(item.occurrenceTimes||{})},wasDirty=item.calendarDirty,wasNotify=item.calendarNotifyGuests;
@@ -1377,7 +1430,7 @@
       closeOccurrenceEditor();renderTasks();renderAgenda();renderToday();showToast(type==='appointment'?'Cette occurrence a été modifiée · les autres restent identiques':'Cette date a été modifiée · les autres occurrences restent en place');
     });
     function agendaEntries(){const appointments=organizer.appointments.flatMap(appointmentAgendaEntries),purchases=organizer.purchases.filter(x=>x.kind==='bought'&&x.date),purchaseEntries=purchases.map(x=>({id:x.id,date:x.date,type:'purchase',theme:'Achats',color:'#781325',label:'Achat · '+[x.brand,x.name].filter(Boolean).join(' ')+' · '+money(Number(x.price)||0)})),dailyTotals=Object.entries(purchases.reduce((totals,x)=>{totals[x.date]=(totals[x.date]||0)+(Number(x.price)||0);return totals},{})).map(([date,total])=>({id:'purchase-total-'+date,date,type:'purchase-total',color:'#781325',label:'Total achats du jour · '+money(total)}));return [...appointments,...organizer.tasks.flatMap(taskAgendaEntries),...purchaseEntries,...dailyTotals,...agendaMealEntries()].map(item=>({...item,color:agendaTypeColor(item.type)})).sort(agendaChronologicalCompare)}
-    function agendaEvent(x){const style=' style="--event-color:'+escapeHtml(x.color||'#9aa5a0')+'"',event=x.isAppointment?'<button class="cal-event colored-event '+x.type+'" type="button" data-appointment-edit="'+escapeHtml(x.id)+'"'+style+' title="Modifier · '+escapeHtml(x.label)+'">'+escapeHtml(x.label)+'</button>':'<span class="cal-event colored-event '+x.type+'"'+style+' title="'+escapeHtml(x.label)+'">'+escapeHtml(x.label)+'</span>';if(!x.occurrenceOriginalDate)return event;const type=x.isAppointment?'appointment':'task';return '<div class="cal-occurrence">'+event+'<button class="occurrence-move" type="button" data-occurrence-move="'+type+'" data-occurrence-id="'+escapeHtml(String(x.id))+'" data-occurrence-original="'+escapeHtml(x.occurrenceOriginalDate)+'" aria-label="Modifier uniquement cette occurrence : '+escapeHtml(x.label)+'" title="Modifier uniquement cette occurrence">↪</button></div>'}
+    function agendaEvent(x){const style=' style="--event-color:'+escapeHtml(x.color||'#9aa5a0')+'"',event=x.isAppointment?'<button class="cal-event colored-event '+x.type+'" type="button" data-appointment-edit="'+escapeHtml(x.id)+'"'+style+' title="Modifier · '+escapeHtml(x.label)+'">'+escapeHtml(x.label)+'</button>':'<span class="cal-event colored-event '+x.type+'"'+style+' title="'+escapeHtml(x.label)+'">'+escapeHtml(x.label)+'</span>';if(!x.occurrenceOriginalDate)return event;const type=x.isAppointment?'appointment':'task';return '<div class="cal-occurrence">'+event+'<button class="occurrence-move" type="button" data-occurrence-move="'+type+'" data-occurrence-id="'+escapeHtml(String(x.id))+'" data-occurrence-original="'+escapeHtml(x.occurrenceOriginalDate)+'" aria-label="Modifier la date ou la répétition : '+escapeHtml(x.label)+'" title="Modifier la date ou la répétition">↪</button></div>'}
     const agendaMobileAnchor=new Date(today+'T12:00:00');let agendaMobileFirst=-14,agendaMobileLast=42,agendaMobileRenderedDate='';
     function agendaMobileIndex(key){const date=new Date(key+'T12:00:00');return Math.round((Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())-Date.UTC(agendaMobileAnchor.getFullYear(),agendaMobileAnchor.getMonth(),agendaMobileAnchor.getDate()))/86400000)}
     function showDateAtStripStart(strip,attribute,date){const selected=strip.querySelector('['+attribute+'="'+date+'"]');if(!selected)return;const gutter=parseFloat(getComputedStyle(strip).paddingLeft)||0;strip.scrollLeft+=selected.getBoundingClientRect().left-strip.getBoundingClientRect().left-gutter}
@@ -2556,7 +2609,7 @@ Servir le curry avec le riz.`,notes:''}
     const simpleMealSources=['HelloFresh','Quitoque','Cookidoo','Cookomix','WeChef','Autre'];
 
     /* Choix HelloFresh par date de livraison. Aucun repas n’est ajouté automatiquement. */
-    const helloFreshMealChoices=[{"id":"hf-20261015-orzotto","name":"Orzotto crémeux des bois & fromage frais","minutes":25,"availableFrom":"2026-10-15"},{"id":"hf-20261015-chow-mein","name":"Chow mein : nouilles sautées aux crevettes","minutes":20,"availableFrom":"2026-10-15"},{"id":"hf-20261015-chevre","name":"La Gourmande : chèvre chaud, pomme & lardons","minutes":25,"availableFrom":"2026-10-15"},{"id":"hf-20261015-chili","name":"Chili con carne de Cyril Lignac","minutes":35,"availableFrom":"2026-10-15"},{"id":"hf-20261015-orzo","name":"Orzo « Rojo » au poulet & chorizo","minutes":25,"availableFrom":"2026-10-15"},{"id":"hf-20261015-veloute","name":"Velouté lentilles-coco & crevettes","minutes":40,"availableFrom":"2026-10-15"},{"id":"hf-20261022-lyonnaise","name":"La Lyonnaise : lard, persil & croûtons","minutes":30,"availableFrom":"2026-10-22"},{"id":"hf-20261022-cretoise","name":"La Crétoise : thon, grenailles & broccolini","minutes":25,"availableFrom":"2026-10-22"},{"id":"hf-20261022-nouilles","name":"Nouilles sautées curry-coco à la dinde","minutes":25,"availableFrom":"2026-10-22"},{"id":"hf-20261022-bella","name":"La Bella : parmesan AOP, poulet grillé & origan","minutes":25,"availableFrom":"2026-10-22"},{"id":"hf-20261022-wraps","name":"Wraps de poulet, sauce satay & crudités","minutes":25,"availableFrom":"2026-10-22"},{"id":"hf-20261022-tagliata","name":"Tagliata de bœuf & rigatoni sauce forestière","minutes":25,"availableFrom":"2026-10-22"}];
+    const helloFreshMealChoices=[{"id":"hf-20261015-orzotto","name":"Orzotto crémeux des bois & fromage frais","minutes":25,"availableFrom":"2026-10-15"},{"id":"hf-20261015-chow-mein","name":"Chow mein : nouilles sautées aux crevettes","minutes":20,"availableFrom":"2026-10-15"},{"id":"hf-20261015-chevre","name":"La Gourmande : chèvre chaud, pomme & lardons","minutes":25,"availableFrom":"2026-10-15"},{"id":"hf-20261015-chili","name":"Chili con carne de Cyril Lignac","minutes":35,"availableFrom":"2026-10-15"},{"id":"hf-20261015-orzo","name":"Orzo « Rojo » au poulet & chorizo","minutes":25,"availableFrom":"2026-10-15"},{"id":"hf-20261015-veloute","name":"Velouté lentilles-coco & crevettes","minutes":40,"availableFrom":"2026-10-15"},{"id":"hf-20261022-lyonnaise","name":"La Lyonnaise : lard, persil & croûtons","minutes":30,"availableFrom":"2026-10-22"},{"id":"hf-20261022-cretoise","name":"La Crétoise : thon, grenailles & broccolini","minutes":25,"availableFrom":"2026-10-22"},{"id":"hf-20261022-nouilles","name":"Nouilles sautées curry-coco à la dinde","minutes":25,"availableFrom":"2026-10-22"},{"id":"hf-20261022-bella","name":"La Bella : parmesan AOP, poulet grillé & origan","minutes":25,"availableFrom":"2026-10-22"},{"id":"hf-20261022-wraps","name":"Wraps de poulet, sauce satay & crudités","minutes":25,"availableFrom":"2026-10-22"},{"id":"hf-20261022-tagliata","name":"Tagliata de bœuf & rigatoni sauce forestière","minutes":25,"availableFrom":"2026-10-22"},{"id":"hf-20261030-mediterraneenne","name":"La Méditerranéenne : penne, thon & olives","minutes":20,"availableFrom":"2026-10-30"},{"id":"hf-20261030-croque","name":"Croque rustique jambon & crème de gouda","minutes":20,"availableFrom":"2026-10-30"},{"id":"hf-20261030-orzo","name":"Mijoté d’orzo, paupiette de veau & olives","minutes":35,"availableFrom":"2026-10-30"},{"id":"hf-20261030-penne","name":"Penne au poulet doré, persil & gouda","minutes":25,"availableFrom":"2026-10-30"},{"id":"hf-20261030-paprika","name":"Poulet au paprika, lard & purée de carotte","minutes":40,"availableFrom":"2026-10-30"}];
     function helloFreshPlannedSlots(recipe){
       const keys=new Set([...Object.keys(extras.weekPlan||{}),...Object.keys(meals||{})]);
       return [...keys].filter(key=>{
