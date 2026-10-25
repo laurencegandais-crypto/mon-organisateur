@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v149 : plats HelloFresh disponibles à partir du 22 octobre -->
+<!-- Version v150 : masquer les plats planifiés dans la gestion HelloFresh -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -2583,14 +2583,14 @@ Servir le curry avec le riz.`,notes:''}
     }
     function helloFreshManagerRows(key='9999-12-31'){
       const date=key.slice(0,10);
-      return helloFreshMealChoices.filter(recipe=>(recipe.availableFrom||'2026-10-15')<=date).map(recipe=>{
-        const hidden=Boolean(extras.helloFreshChoiceVisibility?.[recipe.id]?.hidden),planned=helloFreshPlannedSlots(recipe),status=[hidden?'Retiré des choix':'',planned.length?'Déjà au planning':''].filter(Boolean).join(' · ')||'Disponible';
+      return helloFreshMealChoices.filter(recipe=>(recipe.availableFrom||'2026-10-15')<=date&&!helloFreshPlannedSlots(recipe).length).map(recipe=>{
+        const hidden=Boolean(extras.helloFreshChoiceVisibility?.[recipe.id]?.hidden),status=hidden?'Retiré des choix':'Disponible';
         return '<div class="hf-choice-row"><div><strong>'+escapeHtml(recipe.name)+'</strong><small>'+recipe.minutes+' min · '+escapeHtml(helloFreshDeliveryLabel(recipe.availableFrom||'2026-10-15'))+' · '+status+'</small></div><button type="button" data-hf-choice-toggle="'+recipe.id+'" aria-label="'+(hidden?'Remettre dans les choix : ':'Retirer des choix : ')+escapeHtml(recipe.name)+'">'+(hidden?'Remettre':'Retirer')+'</button></div>';
-      }).join('');
+      }).join('')||'<p>Aucun plat à gérer pour cette date : les plats déjà planifiés sont masqués.</p>';
     }
     function helloFreshMealOptions(date,name,source,key){
       if(date<'2026-10-15')return '';
-      return '<label>Mes plats HelloFresh<select name="mealHelloFresh">'+helloFreshOptionList(key,name,source)+'</select></label><details class="hf-choice-manager"><summary>Gérer mes plats HelloFresh</summary><p>Un plat déjà au planning revient dans les choix si vous supprimez ce repas. « Retirer » le masque jusqu’à ce que vous le remettiez, sans supprimer vos repas prévus.</p><div class="hf-choice-list">'+helloFreshManagerRows(key)+'</div></details>';
+      return '<label>Mes plats HelloFresh<select name="mealHelloFresh">'+helloFreshOptionList(key,name,source)+'</select></label><details class="hf-choice-manager"><summary>Gérer mes plats HelloFresh</summary><p>Les plats déjà planifiés sont masqués ici. Ils réapparaissent si vous supprimez le repas du planning. « Retirer » le masque jusqu’à ce que vous le remettiez, sans supprimer vos repas prévus.</p><div class="hf-choice-list">'+helloFreshManagerRows(key)+'</div></details>';
     }
     function applyHelloFreshMealChoice(form){
       const key=form.dataset.simpleMealForm,recipe=helloFreshAvailableChoices(key).find(item=>item.id===form.querySelector('[name="mealHelloFresh"]')?.value);
