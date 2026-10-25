@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v149 : plats HelloFresh disponibles à partir du 22 octobre -->
+<!-- Version v150 : gérer les recettes HelloFresh restantes et les supprimer définitivement -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -2565,12 +2565,13 @@ Servir le curry avec le riz.`,notes:''}
         return extras.mealPlanningInfo?.[key]?.helloFreshId===recipe.id||(extras.mealSources?.[key]==='HelloFresh'&&name===recipe.name);
       });
     }
+    function isHelloFreshChoiceDeleted(id){return Boolean(extras.helloFreshChoiceVisibility?.[id]?.hidden||extras.helloFreshChoiceVisibility?.[id]?.deleted)}
     function helloFreshAvailableChoices(key){
       const date=String(key||'').slice(0,10);
       return helloFreshMealChoices.filter(recipe=>{
         if(date<(recipe.availableFrom||'2026-10-15'))return false;
         const slots=helloFreshPlannedSlots(recipe);
-        return slots.includes(key)||(!extras.helloFreshChoiceVisibility?.[recipe.id]?.hidden&&!slots.length);
+        return slots.includes(key)||(!isHelloFreshChoiceDeleted(recipe.id)&&!slots.length);
       });
     }
     function helloFreshDeliveryLabel(date){
@@ -2583,14 +2584,13 @@ Servir le curry avec le riz.`,notes:''}
     }
     function helloFreshManagerRows(key='9999-12-31'){
       const date=key.slice(0,10);
-      return helloFreshMealChoices.filter(recipe=>(recipe.availableFrom||'2026-10-15')<=date).map(recipe=>{
-        const hidden=Boolean(extras.helloFreshChoiceVisibility?.[recipe.id]?.hidden),planned=helloFreshPlannedSlots(recipe),status=[hidden?'Retiré des choix':'',planned.length?'Déjà au planning':''].filter(Boolean).join(' · ')||'Disponible';
-        return '<div class="hf-choice-row"><div><strong>'+escapeHtml(recipe.name)+'</strong><small>'+recipe.minutes+' min · '+escapeHtml(helloFreshDeliveryLabel(recipe.availableFrom||'2026-10-15'))+' · '+status+'</small></div><button type="button" data-hf-choice-toggle="'+recipe.id+'" aria-label="'+(hidden?'Remettre dans les choix : ':'Retirer des choix : ')+escapeHtml(recipe.name)+'">'+(hidden?'Remettre':'Retirer')+'</button></div>';
-      }).join('');
+      return helloFreshMealChoices.filter(recipe=>(recipe.availableFrom||'2026-10-15')<=date&&!isHelloFreshChoiceDeleted(recipe.id)&&!helloFreshPlannedSlots(recipe).length).map(recipe=>{
+        return '<div class="hf-choice-row"><div><strong>'+escapeHtml(recipe.name)+'</strong><small>'+recipe.minutes+' min · '+escapeHtml(helloFreshDeliveryLabel(recipe.availableFrom||'2026-10-15'))+'</small></div><button type="button" data-hf-choice-delete="'+recipe.id+'" aria-label="Supprimer définitivement de mes plats : '+escapeHtml(recipe.name)+'">Supprimer</button></div>';
+      }).join('')||'<p>Aucune recette disponible pour cette date.</p>';
     }
     function helloFreshMealOptions(date,name,source,key){
       if(date<'2026-10-15')return '';
-      return '<label>Mes plats HelloFresh<select name="mealHelloFresh">'+helloFreshOptionList(key,name,source)+'</select></label><details class="hf-choice-manager"><summary>Gérer mes plats HelloFresh</summary><p>Un plat déjà au planning revient dans les choix si vous supprimez ce repas. « Retirer » le masque jusqu’à ce que vous le remettiez, sans supprimer vos repas prévus.</p><div class="hf-choice-list">'+helloFreshManagerRows(key)+'</div></details>';
+      return '<label>Mes plats HelloFresh<select name="mealHelloFresh">'+helloFreshOptionList(key,name,source)+'</select></label><details class="hf-choice-manager"><summary>Gérer mes plats HelloFresh</summary><p>Voici les recettes encore disponibles. Les plats planifiés disparaissent et reviennent si vous supprimez leur repas du planning. Si vous utilisez les ingrédients autrement, « Supprimer » retire définitivement la recette de vos choix, sans effacer vos repas prévus.</p><div class="hf-choice-list">'+helloFreshManagerRows(key)+'</div></details>';
     }
     function applyHelloFreshMealChoice(form){
       const key=form.dataset.simpleMealForm,recipe=helloFreshAvailableChoices(key).find(item=>item.id===form.querySelector('[name="mealHelloFresh"]')?.value);
@@ -2600,11 +2600,12 @@ Servir le curry avec le riz.`,notes:''}
       form.querySelector('[name="mealSource"]').value='HelloFresh';
       form.querySelector('.simple-meal-other').hidden=true;
     }
-    function setHelloFreshChoiceHidden(id,hidden){
+    function deleteHelloFreshChoice(id){
       if(!helloFreshMealChoices.some(recipe=>recipe.id===id))return false;
+      if(isHelloFreshChoiceDeleted(id))return true;
       const previous=extras.helloFreshChoiceVisibility;
-      extras.helloFreshChoiceVisibility={...(previous||{}),[id]:{hidden,updatedAt:Date.now()}};
-      try{persistLocal(previewExtrasKey,extras)}catch(error){extras.helloFreshChoiceVisibility=previous;showToast('Impossible d’enregistrer ce choix. Vos repas sont conservés.');return false}
+      extras.helloFreshChoiceVisibility={...(previous||{}),[id]:{hidden:true,deleted:true,updatedAt:Date.now()}};
+      try{persistLocal(previewExtrasKey,extras)}catch(error){extras.helloFreshChoiceVisibility=previous;showToast('Suppression impossible. La recette et vos repas sont conservés.');return false}
       scheduleCloudSave();return true;
     }
 
@@ -2690,18 +2691,20 @@ Servir le curry avec le riz.`,notes:''}
       remove.disabled=true;const key=remove.dataset.simpleMealRemove;simpleMealEditingSlot='';delete extras.mealDetails[key];saveMealPlanSlot(key,'');renderMealPlanner();showToast('Repas supprimé')
     },true);
     simpleMealPlan.addEventListener('click',event=>{
-      const button=event.target.closest('[data-hf-choice-toggle]');if(!button)return;
+      const button=event.target.closest('[data-hf-choice-delete]');if(!button)return;
       event.preventDefault();event.stopImmediatePropagation();
-      const id=button.dataset.hfChoiceToggle,hidden=!extras.helloFreshChoiceVisibility?.[id]?.hidden;
-      if(!setHelloFreshChoiceHidden(id,hidden))return;
+      const id=button.dataset.hfChoiceDelete,recipe=helloFreshMealChoices.find(item=>item.id===id);if(!recipe)return;
+      if(!confirm('Supprimer définitivement « '+recipe.name+' » de vos plats HelloFresh disponibles ? Vos repas déjà enregistrés resteront dans le planning.'))return;
+      if(!deleteHelloFreshChoice(id))return;
       for(const form of simpleMealPlan.querySelectorAll('[data-simple-meal-form]')){
         const select=form.querySelector('[name="mealHelloFresh"]');if(!select)continue;
         const draft=select.value,name=form.querySelector('[name="mealName"]').value,source=form.querySelector('[name="mealSource"]').value;
         select.innerHTML=helloFreshOptionList(form.dataset.simpleMealForm,name,source);
         if([...select.options].some(option=>option.value===draft))select.value=draft;
+        else if(draft===id&&name===recipe.name&&source==='HelloFresh'){form.querySelector('[name="mealName"]').value='';form.querySelector('[name="mealMinutes"]').value='';form.querySelector('[name="mealSource"]').value='';}
         form.querySelector('.hf-choice-list').innerHTML=helloFreshManagerRows(form.dataset.simpleMealForm);
       }
-      showToast(hidden?'Plat retiré des choix · repas prévus conservés':'Plat remis dans les choix');
+      showToast('Recette supprimée de vos plats disponibles');
     },true);
     simpleMealPlan.addEventListener('change',event=>{
       const form=event.target.closest('[data-simple-meal-form]');if(!form)return;
