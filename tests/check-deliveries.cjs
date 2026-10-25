@@ -11,3 +11,18 @@ const key='2026-10-22:dinner',id='hf-20261022-lyonnaise',name='La Lyonnaise : la
 delete extras.weekPlan[key];delete extras.mealSources[key];delete extras.mealPlanningInfo[key];assert.equal(choices('2026-10-23').length,12);context.setHelloFreshChoiceHidden(id,true);assert.equal(choices('2026-10-23').length,11);context.setHelloFreshChoiceHidden(id,false);assert.equal(choices('2026-10-23').length,12);
 const fields={mealHelloFresh:{value:id},mealName:{value:''},mealMinutes:{value:''},mealSource:{value:''},other:{hidden:false}};const form={dataset:{simpleMealForm:key},querySelector:s=>s==='.simple-meal-other'?fields.other:fields[s.match(/name="(.*?)"/)[1]]};context.applyHelloFreshMealChoice(form);assert.equal(fields.mealName.value,name);assert.equal(fields.mealMinutes.value,'30');assert.equal(fields.mealSource.value,'HelloFresh');fields.mealName.value='Saisie libre';fields.mealHelloFresh.value='';context.applyHelloFreshMealChoice(form);assert.equal(fields.mealName.value,'Saisie libre');
 new vm.Script(html.match(/<script>([\s\S]*?)<\/script>/)[1]);console.log('OK : dates de disponibilité, deux livraisons, plats déjà planifiés, suppression, retrait et rétablissement, durée et saisie libre.');
+
+// Les plats planifiés disparaissent de la gestion, y compris pour leur propre date.
+const managedKey='2026-10-23:lunch',managedId='hf-20261022-tagliata',managedName='Tagliata de bœuf & rigatoni sauce forestière';
+assert(context.helloFreshManagerRows(managedKey).includes(managedId));
+extras.weekPlan[managedKey]='__text:'+managedName;extras.mealSources[managedKey]='HelloFresh';
+assert(!context.helloFreshManagerRows(managedKey).includes(managedId));
+assert(!context.helloFreshManagerRows('2026-10-24:dinner').includes(managedId));
+assert(context.helloFreshOptionList(managedKey,managedName,'HelloFresh').includes('value="'+managedId+'" selected'));
+assert(!context.helloFreshOptionList('2026-10-24:dinner','','').includes(managedId));
+context.setHelloFreshChoiceHidden(managedId,true);assert(!context.helloFreshManagerRows(managedKey).includes(managedId));
+delete extras.weekPlan[managedKey];delete extras.mealSources[managedKey];
+assert(context.helloFreshManagerRows(managedKey).includes(managedId));
+assert(!context.helloFreshOptionList(managedKey,'','').includes(managedId));
+context.setHelloFreshChoiceHidden(managedId,false);assert(context.helloFreshOptionList(managedKey,'','').includes(managedId));
+console.log('OK : plats planifiés masqués dans la gestion, retour après suppression, choix actuel conservé et retrait manuel respecté.');
