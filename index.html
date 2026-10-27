@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v152 : recalculer les rendez-vous suivants depuis une nouvelle date -->
+<!-- Version v153 : synchroniser les occurrences correspondant à la série recalculée -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -1337,6 +1337,9 @@
       const index=item.recurrence==='monthly'?((day.getFullYear()-first.getFullYear())*12+day.getMonth()-first.getMonth())/interval:days/(interval*(item.recurrence==='weekly'?7:1));
       return Number.isInteger(index)&&index>=0&&appointmentRecurrenceDate(item,index)===original?index:-1;
     }
+    function isCurrentAppointmentOccurrence(item,original){
+      return ['daily','weekly','monthly'].includes(item.recurrence)&&appointmentRecurrenceIndex(item,original)>=0&&(!item.recurrenceEnd||original<=item.recurrenceEnd);
+    }
     function reanchorAppointmentSeries(item,original,target,start,end){
       const pivot=appointmentRecurrenceIndex(item,original);if(pivot<0)throw new Error('Cette occurrence ne correspond plus à la série. Rouvrez le rendez-vous.');
       if(item.recurrenceEnd&&target>item.recurrenceEnd)throw new Error('La nouvelle date dépasse la fin de la récurrence. Modifiez d’abord la date de fin de la série.');
@@ -1545,7 +1548,8 @@
     async function syncAppointmentToGoogle(item){const payload=googleCalendarPayload(item),notify=item.calendarNotifyGuests?'all':'none';let current=null,event;if(item.googleEventId)try{current=await calendarApi('events/'+encodeURIComponent(item.googleEventId))}catch(error){if(error.status!==404&&error.status!==410)throw error}if(!current)current=await findGoogleAppointment(item);if(current){if(current.extendedProperties?.private?.siteAppointmentId!==String(item.id))throw new Error('Ce rendez-vous Google appartient à un autre élément.');if(sameGoogleAppointment(current,payload))event=current;else{const body=googleCalendarUpdateBody(current,payload),conference=current.conferenceData?'&conferenceDataVersion=1':'';event=await calendarApi('events/'+encodeURIComponent(current.id)+'?sendUpdates='+notify+'&supportsAttachments=true'+conference,{method:'PUT',body:JSON.stringify(body)})}}else{const id=mirrorEventId('appointment:'+String(item.id));try{event=await calendarApi('events?sendUpdates='+notify,{method:'POST',body:JSON.stringify({...payload,id})})}catch(error){if(error.status!==409)throw error;current=await calendarApi('events/'+encodeURIComponent(id));if(current.extendedProperties?.private?.siteAppointmentId!==String(item.id))throw error;event=current}}item.googleEventId=event.id;await syncAppointmentOccurrenceTimes(item);item.googleEventLink=event.htmlLink||item.googleEventLink||'';item.googleSyncedAt=new Date().toISOString();item.calendarDirty=false;item.calendarNotifyGuests=false;item.calendarRecurrenceVerified=true;saveOrganizer();return item}
     async function syncAppointmentOccurrenceTimes(item){
       if(!['daily','weekly','monthly'].includes(item.recurrence))return;
-      const originals=[...new Set([...Object.keys(item.occurrenceTimes||{}),...Object.keys(item.googleOccurrenceTimes||{})])];
+      const currentTimes=Object.fromEntries(Object.entries(item.occurrenceTimes||{}).filter(([original])=>isCurrentAppointmentOccurrence(item,original)));
+      const originals=[...new Set([...Object.keys(currentTimes),...Object.keys(item.googleOccurrenceTimes||{})])].filter(original=>isCurrentAppointmentOccurrence(item,original));
       for(const original of originals){
         const originalStart=item.start?new Date(original+'T'+item.start+':00').toISOString():original;
         const response=await calendarApi('events/'+encodeURIComponent(item.googleEventId)+'/instances?'+new URLSearchParams({originalStart,maxResults:'50'}));
@@ -1554,14 +1558,14 @@
         const payload=googleCalendarPayload(appointmentOccurrence(item,original));
         await calendarApi('events/'+encodeURIComponent(instance.id)+'?sendUpdates=none',{method:'PATCH',body:JSON.stringify({start:payload.start,end:payload.end})});
       }
-      item.googleOccurrenceTimes={...(item.occurrenceTimes||{})};
+      item.googleOccurrenceTimes={...currentTimes};
     }
     async function syncAllCalendarAppointments(){if(calendarSync.syncing)return;calendarSync.syncing=true;setCalendarSyncStatus('Synchronisation en cours…','syncing');let synced=0,deleted=0,failed=0;try{for(const pending of [...(organizer.calendarDeletions||[])]){try{await calendarApi('events/'+encodeURIComponent(pending.googleEventId)+'?sendUpdates=all',{method:'DELETE'});organizer.calendarDeletions=organizer.calendarDeletions.filter(x=>x.googleEventId!==pending.googleEventId);deleted++;saveOrganizer()}catch(error){if(error.status===404||error.status===410){organizer.calendarDeletions=organizer.calendarDeletions.filter(x=>x.googleEventId!==pending.googleEventId);deleted++;saveOrganizer()}else{failed++;if(error.code==='calendar-auth-required'||error.status===403)throw error}}}for(const item of organizer.appointments.filter(x=>x.calendarDirty||!x.googleEventId||(['daily','weekly','monthly'].includes(x.recurrence)&&!x.calendarRecurrenceVerified))){try{await syncAppointmentToGoogle(item);synced++}catch(error){console.error(error);failed++;if(error.code==='calendar-auth-required'||error.status===403)throw error}}const parts=[];if(synced)parts.push(synced+' rendez-vous synchronisé'+(synced>1?'s':''));if(deleted)parts.push(deleted+' suppression'+(deleted>1?'s':''));if(failed)parts.push(failed+' en attente');setCalendarSyncStatus(parts.join(' · ')||'Tout est synchronisé',failed?'error':'connected');if(synced||deleted)showToast('Google Agenda mis à jour')}catch(error){console.error(error);if(error.code!=='calendar-auth-required'){const apiDisabled=error.status===403;setCalendarSyncStatus(apiDisabled?'Activez l’API Google Calendar puis réessayez':error.message||'Synchronisation impossible','error')}}finally{calendarSync.syncing=false;const connected=Boolean(calendarSync.token&&Date.now()<calendarSync.expiresAt);document.querySelector('#calendarSyncAllButton').disabled=!connected;document.querySelector('#calendarConnectButton').disabled=false}}
     function mirrorEventId(key){return 'mq'+Array.from(new TextEncoder().encode(key),byte=>byte.toString(16).padStart(2,'0')).join('')}
     function persistCalendarMirrors(){localStorage.setItem(organizerKey,JSON.stringify(organizer))}
     function mirrorCalendarItems(){return agendaEntries().filter(item=>!item.isAppointment&&!item.isTaskOccurrence&&item.type!=='purchase-total'&&item.type!=='note'&&normalizeCalendarDate(item.date)).map(item=>item.type==='task'&&item.occurrenceOriginalDate?{...item,date:item.occurrenceOriginalDate}:item)}
     function calendarExceptionLines(item,timed,startTime){
-      const pairs=occurrenceMovePairs(item).filter(([from])=>from>=(item.deadline||item.date||'')&&!Object.hasOwn(item.occurrenceTimes||{},from)&&!Object.hasOwn(item.googleOccurrenceTimes||{},from));if(!pairs.length)return[];
+      const pairs=occurrenceMovePairs(item).filter(([from])=>from>=(item.deadline||item.date||'')&&(!item.date||item.deadline||isCurrentAppointmentOccurrence(item,from))&&!Object.hasOwn(item.occurrenceTimes||{},from)&&!Object.hasOwn(item.googleOccurrenceTimes||{},from));if(!pairs.length)return[];
       const stamp=key=>timed?new Date(key+'T'+(startTime||'09:00')+':00').toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''):key.replaceAll('-','');
       const kind=timed?'':';VALUE=DATE';
       return['EXDATE'+kind+':'+pairs.map(([from])=>stamp(from)).join(','),'RDATE'+kind+':'+pairs.map(([,to])=>stamp(to)).join(',')];
@@ -1618,7 +1622,7 @@
           try{const path='events/'+encodeURIComponent(record.eventId),current=await calendarApi(path);if(current.extendedProperties?.private?.siteMirrorKey===key){await calendarApi(path+'?sendUpdates=none',{method:'DELETE'});deleted++}delete organizer.calendarMirrors[key];organizer.calendarMirrorDeletions=organizer.calendarMirrorDeletions.filter(value=>value!==key);changed=true;persistCalendarMirrors()}
           catch(error){if(error.status===404||error.status===410){delete organizer.calendarMirrors[key];organizer.calendarMirrorDeletions=organizer.calendarMirrorDeletions.filter(value=>value!==key);changed=true;persistCalendarMirrors()}else{failed++;console.error(error);if(error.code==='calendar-auth-required'||error.status===403||isLocalStorageQuotaError(error))throw error}}
         }
-        const parts=[];if(synced)parts.push(synced+' élément'+(synced>1?'s':'')+' ajouté'+(synced>1?'s':'')+' ou modifié'+(synced>1?'s':''));if(deleted)parts.push(deleted+' retiré'+(deleted>1?'s':''));if(failed)parts.push(failed+' en attente');setCalendarSyncStatus(parts.join(' · ')||'Agenda Google à jour',failed?'error':'connected')
+        const parts=[];if(synced)parts.push(synced+' élément'+(synced>1?'s':'')+' ajouté'+(synced>1?'s':'')+' ou modifié'+(synced>1?'s':''));if(deleted)parts.push(deleted+' retiré'+(deleted>1?'s':''));if(failed)parts.push(failed+' en attente');const pendingAppointments=(organizer.calendarSyncErrors||[]).filter(entry=>organizer.appointments.some(item=>sameId(item.id,entry.id))).length;if(pendingAppointments)parts.push(pendingAppointments+' rendez-vous à vérifier');setCalendarSyncStatus(parts.join(' · ')||'Agenda Google à jour',failed||pendingAppointments?'error':'connected')
       }catch(error){console.error(error);if(error.code!=='calendar-auth-required')setCalendarSyncStatus(isLocalStorageQuotaError(error)?calendarStorageWarning():error.message||'Synchronisation incomplète','error')}
       finally{if(changed)try{saveOrganizer()}catch(error){console.error(error);if(isLocalStorageQuotaError(error))setCalendarSyncStatus(calendarStorageWarning(),'error');else setCalendarSyncStatus(error.message||'Enregistrement local impossible','error')}calendarSync.syncing=false;const status=document.querySelector('#calendarSyncStatus'),connected=Boolean(calendarSync.token&&Date.now()<calendarSync.expiresAt);setCalendarSyncStatus(localBackupStorageFull&&!status.classList.contains('error')?calendarStorageWarning():status.lastElementChild.textContent,connected?(status.classList.contains('error')||localBackupStorageFull?'error':'connected'):'')}
     }
