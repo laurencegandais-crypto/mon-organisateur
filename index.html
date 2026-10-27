@@ -1233,7 +1233,7 @@
       }
     }
     addRecurrenceFields();
-    function recurrenceMeta(x){if(!x.recurrence)return '';const interval=Number(x.recurrenceInterval)||1,cadence=interval===1?(x.recurrence==='daily'?'Chaque jour':x.recurrence==='weekly'?'Chaque semaine':'Chaque mois'):(x.recurrence==='daily'?'Tous les '+interval+' jours':x.recurrence==='weekly'?'Toutes les '+interval+' semaines':'Tous les '+interval+' mois'),day=x.recurrence==='weekly'&&x.recurrenceDay!==''&&x.recurrenceDay!=null?' · '+weekdayLabels[Number(x.recurrenceDay)]:x.recurrence==='monthly'&&x.recurrenceDay?' · le '+x.recurrenceDay:'';return ' · ↻ '+cadence+day+(x.recurrenceEnd?' jusqu’au '+niceDate(x.recurrenceEnd):'')}
+    function recurrenceMeta(x,includeWeekday=true){if(!x.recurrence)return '';const interval=Number(x.recurrenceInterval)||1,cadence=interval===1?(x.recurrence==='daily'?'Chaque jour':x.recurrence==='weekly'?'Chaque semaine':'Chaque mois'):(x.recurrence==='daily'?'Tous les '+interval+' jours':x.recurrence==='weekly'?'Toutes les '+interval+' semaines':'Tous les '+interval+' mois'),day=includeWeekday&&x.recurrence==='weekly'&&x.recurrenceDay!==''&&x.recurrenceDay!=null?' · '+weekdayLabels[Number(x.recurrenceDay)]:x.recurrence==='monthly'&&x.recurrenceDay?' · le '+x.recurrenceDay:'';return ' · ↻ '+cadence+day+(x.recurrenceEnd?' jusqu’au '+niceDate(x.recurrenceEnd):'')}
     const compactEditIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg>',compactDeleteIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>';
     let todoFilter='all';
     const taskType=x=>x.type||(String(x.category||'').toLocaleLowerCase('fr')==='pro'?'Pro':'Perso');
@@ -1283,7 +1283,7 @@
       root.innerHTML='<h3 class="agenda-day-heading">'+escapeHtml(heading)+'</h3>'+(selected.length?selected.map(item=>{
         const time=item.type==='meeting'||item.type==='task'?(item.start||'Journée'):item.type==='meal-lunch'?'Midi':item.type==='meal-dinner'?'Soir':'Journée';
         const label=item.isAppointment?item.title||item.label:item.type==='task'?item.label.replace(/^To do · (?:\d{2}:\d{2} · )?/,''):item.label.replace(/^(Midi|Soir|Achat) · /,'');
-        const meta=[(item.type==='task'||item.isAppointment)&&item.start&&item.end?'jusqu’à '+item.end:'',item.isAppointment?item.note||'':'',item.isAppointment&&item.recurrence?recurrenceMeta(item).replace(/^ · /,''):''].filter(Boolean).join(' · ');
+        const meta=[(item.type==='task'||item.isAppointment)&&item.start&&item.end?'jusqu’à '+item.end:'',item.isAppointment?item.note||'':'',item.isAppointment&&item.recurrence?recurrenceMeta(item,false).replace(/^ · /,''):''].filter(Boolean).join(' · ');
         const style=' style="--event-color:'+escapeHtml(item.color||'#96516f')+'"',content='<strong>'+escapeHtml(label||'Sans titre')+'</strong>'+(meta?'<small>'+escapeHtml(meta)+'</small>':'');
         const id=escapeHtml(String(item.id));
         const move=item.occurrenceOriginalDate?'<button type="button" class="agenda-day-delete occurrence-move" data-occurrence-move="'+(item.isAppointment?'appointment':'task')+'" data-occurrence-id="'+id+'" data-occurrence-original="'+escapeHtml(item.occurrenceOriginalDate)+'" aria-label="Modifier la date ou la répétition" title="Modifier la date ou la répétition">↪</button>':'';
