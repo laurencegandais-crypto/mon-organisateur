@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v153 : synchroniser les occurrences correspondant à la série recalculée -->
+<!-- Version v154 : récapitulatif des achats depuis les montants -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -928,6 +928,30 @@
     #panelMeals .hf-choice-row strong{display:block;font-size:.86rem;line-height:1.45;white-space:normal;overflow-wrap:anywhere;color:#021b39}
     #panelMeals .hf-choice-row small{display:block;margin-top:5px;font-size:.78rem;line-height:1.4;color:#536071}
     #panelMeals .hf-choice-row button{min-height:44px;min-width:80px;padding:9px 10px;border:1px solid #ead5da;border-radius:10px;background:#f4e7ea;color:#781325;font-size:.82rem;font-weight:750}
+
+    #panelPurchases .purchase-recap-trigger{font:inherit;cursor:pointer;text-align:left}
+    #panelPurchases .purchase-recap-trigger:focus-visible{outline:3px solid #021b39;outline-offset:3px}
+    .purchase-recap-dialog{width:min(640px,calc(100% - 28px));max-width:640px;max-height:85dvh;padding:0;border:0;border-radius:22px;color:#021b39;background:#fff;box-shadow:0 20px 70px rgb(2 27 57 / 28%)}
+    .purchase-recap-dialog[open]{display:flex;flex-direction:column}
+    .purchase-recap-dialog::backdrop{background:rgb(2 27 57 / 50%)}
+    .purchase-recap-header{display:flex;flex:0 0 auto;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 20px 16px;border-bottom:1px solid #e6e9ee}
+    .purchase-recap-header h2{margin:0;color:#781325;font:800 1.25rem/1.3 system-ui,sans-serif;letter-spacing:normal}
+    .purchase-recap-header p{margin:6px 0 0;color:#687181;font-size:.85rem}
+    #purchaseRecapClose{flex:0 0 44px;width:44px;min-height:44px;padding:0;border:0;border-radius:50%;color:#781325;background:#f4e7ea;font-size:1.65rem}
+    .purchase-recap-list{flex:1 1 auto;min-height:0;margin:0;padding:0 20px;overflow-y:auto;overscroll-behavior:contain;list-style:none}
+    .purchase-recap-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:15px 0;border-bottom:1px solid #e6e9ee}
+    .purchase-recap-row:last-child{border-bottom:0}
+    .purchase-recap-row small{display:block;margin-bottom:4px;color:#687181;font-size:.82rem;line-height:1.4;overflow-wrap:anywhere}
+    .purchase-recap-row strong{display:block;font-size:1rem;line-height:1.4;white-space:normal;overflow-wrap:anywhere}
+    .purchase-recap-row>span{font-weight:800;font-size:.95rem;white-space:nowrap}
+    .purchase-recap-empty{padding:26px 0;color:#687181;font-size:.95rem}
+    .purchase-recap-footer{display:flex;flex:0 0 auto;justify-content:space-between;gap:14px;padding:18px 20px;color:#781325;background:#faf4f6;border-top:1px solid #ead5da;font-size:1.1rem;font-weight:800}
+    @media(max-width:600px){
+      #panelPurchases .purchase-recap-trigger{text-align:center}
+      .purchase-recap-dialog{position:fixed;inset:auto 0 0;width:100%;max-width:100%;max-height:90dvh;margin:0;border-radius:22px 22px 0 0}
+      .purchase-recap-footer{padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+    }
+
 </style>
 </head>
 <body>
@@ -986,7 +1010,7 @@
       <div class="app-grid"><aside class="panel app-card"><h2>Nouvelle tâche</h2><form class="composer" id="taskForm"><label class="field">Nom de la tâche<input id="taskText" required maxlength="160" placeholder="Ex. : envoyer le dossier"></label><label class="field">Liste<select id="taskCategory"><option value="Perso">Personnel</option><option value="Pro">Professionnel</option></select></label><label class="field">Date / deadline <span class="hint">(facultatif)</span><input id="taskDeadline" type="date"></label><label class="field">Heure de début<input id="taskStartTime" type="time"></label><label class="field">Heure de fin<input id="taskEndTime" type="time"></label><label class="field">Commentaire <span class="hint">(facultatif)</span><textarea id="taskDescription" maxlength="1000" rows="3" placeholder="Détails utiles…"></textarea></label><textarea id="taskProgress" hidden></textarea><button class="primary" type="submit">Enregistrer la tâche</button><button class="secondary" id="taskEditCancel" type="button" hidden>Annuler la modification</button></form></aside><div class="app-stack"><section class="panel app-card"><nav class="todo-section-nav" aria-label="Type de tâches"><button type="button" data-todo-section="all" aria-pressed="true">Toutes</button><button type="button" data-todo-section="Perso" aria-pressed="false">Perso</button><button type="button" data-todo-section="Pro" aria-pressed="false">Pro</button></nav><div class="app-list" id="todoList"></div></section></div></div><details class="panel todo-completed" id="todoCompleted"><summary>Tâches terminées <span class="todo-completed-count" id="doneTaskCount">0</span></summary><div class="app-list" id="doneList"></div></details>
     </section>
     <section class="tab-panel" id="panelPurchases" role="tabpanel" aria-labelledby="tabPurchases" hidden>
-      <div class="totals"><div class="total-box"><span>Total général</span><strong id="purchaseTotal">0 €</strong></div><div class="total-box"><span>Ce mois-ci</span><strong id="purchaseMonthTotal">0 €</strong></div><div class="total-box"><span>Nombre d’achats</span><strong id="purchaseCount">0</strong></div></div>
+      <div class="totals"><button class="total-box purchase-recap-trigger" type="button" data-purchase-recap="all" aria-haspopup="dialog" aria-controls="purchaseRecapDialog"><span>Total général</span><strong id="purchaseTotal">0 €</strong></button><button class="total-box purchase-recap-trigger" type="button" data-purchase-recap="month" aria-haspopup="dialog" aria-controls="purchaseRecapDialog"><span>Ce mois-ci</span><strong id="purchaseMonthTotal">0 €</strong></button><div class="total-box"><span>Nombre d’achats</span><strong id="purchaseCount">0</strong></div></div>
       <div class="app-grid" style="margin-top:18px"><aside class="panel app-card"><h2>Ajouter</h2><form class="composer" id="purchaseForm"><label class="field">Type<select id="purchaseKind"><option value="wish">Wishlist</option><option value="bought">Achat réalisé</option></select></label><label class="field">Marque<input id="purchaseBrand" maxlength="80" placeholder="Ex. : Sézane"></label><label class="field">Produit<input id="purchaseName" required maxlength="100"></label><label class="field">Commentaire<textarea id="purchaseDescription" maxlength="400" placeholder="Taille, couleur, avis…"></textarea></label><label class="field">Prix (€)<input id="purchasePrice" type="number" min="0" step="0.01"></label><label class="field" id="purchaseDateField">Date d’achat<input id="purchaseDate" type="date"></label><label class="field">Type d’article<select id="purchaseCategory"><option>Haut</option><option>Bas</option><option>Robe ou combinaison</option><option>Manteau ou veste</option><option>Chaussures</option><option>Bijoux</option><option>Sac</option><option>Accessoire</option><option value="Vêtement">Vêtement non précisé</option><option>Autres</option></select></label><div class="field"><label for="purchaseUrl">Lien du produit</label><div class="purchase-url-row"><input id="purchaseUrl" type="text" inputmode="url" autocomplete="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Collez le lien du produit"><button class="secondary purchase-paste-url" id="purchasePasteUrl" type="button">Coller</button></div></div><label class="field" id="purchasePhotoField"><span id="purchasePhotoLabel">Photo de la wishlist</span><input id="purchasePhoto" type="file" accept="image/*"><span class="purchase-photo-note">La photo est compressée et conservée uniquement sur cet appareil.</span></label><button class="primary" id="purchaseSubmit" type="submit">Enregistrer</button><button class="secondary" id="purchaseCancelEdit" type="button" hidden>Annuler la modification</button></form></aside><div class="app-stack"><section class="panel app-card"><h2>Ma wishlist</h2><p class="wishlist-help">Appui long, puis glissez une carte pour la déplacer.</p><div class="app-list" id="wishlist"></div></section><section class="panel app-card"><button class="bought-toggle" id="boughtToggle" type="button" aria-expanded="false" aria-controls="boughtList"><span class="bought-toggle-title">Achats réalisés</span><span class="bought-toggle-count" id="boughtCount">0</span><span class="bought-toggle-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></button><div class="app-list" id="boughtList" hidden></div></section></div></div>
     </section>
     <section class="tab-panel" id="panelNotes" role="tabpanel" aria-labelledby="tabNotes" hidden><div class="app-grid"><aside class="panel app-card"><h2 id="noteFormHeading">Nouvelle note</h2><form class="composer" id="noteForm"><label class="field">Titre<input id="noteTitle" required maxlength="120" placeholder="Ex. : idée à retenir"></label><label class="field">Texte<textarea id="noteBody" required maxlength="12000" rows="7" placeholder="Écrivez votre note ici…"></textarea></label><button class="primary" type="submit">Enregistrer la note</button><button class="secondary" id="noteCancel" type="button" hidden>Annuler la modification</button></form></aside><section class="panel app-card"><h2>Mes notes</h2><div class="app-list" id="notesList"></div></section></div></section>
@@ -1031,6 +1055,13 @@
       <div id="recipeCookContent"></div>
     </section><p class="footer">Vos objectifs, vos cases cochées et vos repas sont enregistrés automatiquement dans votre navigateur.</p>
   </main>
+
+  <dialog class="purchase-recap-dialog" id="purchaseRecapDialog" aria-labelledby="purchaseRecapTitle" aria-describedby="purchaseRecapCount">
+    <header class="purchase-recap-header"><div><h2 id="purchaseRecapTitle">Récapitulatif des achats</h2><p id="purchaseRecapCount"></p></div><button type="button" id="purchaseRecapClose" aria-label="Fermer le récapitulatif">×</button></header>
+    <ul class="purchase-recap-list" id="purchaseRecapList" role="list"></ul>
+    <footer class="purchase-recap-footer"><span>Total</span><strong id="purchaseRecapTotal"></strong></footer>
+  </dialog>
+
   <script>
     if(location.search&&location.hostname.endsWith('github.io')){history.replaceState(null,'',location.pathname)}
     const defaultThemes=[{name:'Beauté',color:'#f2d5dc'},{name:'Alimentation',color:'#f4e7b7'},{name:'Sommeil',color:'#d1def2'},{name:'Sport',color:'#bfdcc9'}];
@@ -1258,8 +1289,34 @@
     function renderTaskThemeOptions(selected){fillTaskTypeSelect(document.querySelector('#taskCategory'),selected);fillAppointmentCategorySelect(document.querySelector('#appointmentCategory'))}
     function renderQuickCategoryOptions(type){const select=document.querySelector('#quickCategory');if(!select)return;if(type==='appointment')fillAppointmentCategorySelect(select);else if(type==='task')fillTaskTypeSelect(select,select.value);else{const values=type==='purchase'?['Vêtement','Chaussures','Bijoux','Autres']:['Maison','Beauté','Pro','Autre'],current=select.value;select.innerHTML=values.map(x=>'<option>'+escapeHtml(x)+'</option>').join('');select.value=values.includes(current)?current:values[0]}}
     const renderTasksBase=renderTasks;renderTasks=()=>{renderTaskThemeOptions();renderTasksBase()};
+
+    function purchaseRecapData(mode){
+      const month=today.slice(0,7),items=organizer.purchases.filter(item=>item.kind==='bought'&&(mode!=='month'||String(item.date||'').startsWith(month))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+      const title=mode==='month'?'Achats · '+new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'}).format(new Date(today+'T12:00:00')):'Tous mes achats';
+      return{items,total:items.reduce((sum,item)=>sum+(Number(item.price)||0),0),title};
+    }
+    function purchaseRecapRows(items){
+      return items.map(item=>'<li class="purchase-recap-row"><div><small>'+escapeHtml(String(item.brand||'Marque non renseignée'))+'</small><strong>'+escapeHtml(String(item.name||'Produit non renseigné'))+'</strong></div><span>'+money(item.price)+'</span></li>').join('')||'<li class="purchase-recap-empty">Aucun achat pour cette période.</li>';
+    }
+    let purchaseRecapOpener=null,purchaseRecapPreviousOverflow='';
+    function openPurchaseRecap(mode,opener){
+      const dialog=document.querySelector('#purchaseRecapDialog'),data=purchaseRecapData(mode);
+      document.querySelector('#purchaseRecapTitle').textContent=data.title;
+      document.querySelector('#purchaseRecapCount').textContent=data.items.length+' achat'+(data.items.length>1?'s':'');
+      document.querySelector('#purchaseRecapList').innerHTML=purchaseRecapRows(data.items);
+      document.querySelector('#purchaseRecapTotal').textContent=money(data.total);
+      if(!dialog.open){purchaseRecapOpener=opener;purchaseRecapPreviousOverflow=document.body.style.overflow;dialog.showModal();document.body.style.overflow='hidden'}
+    }
+    document.querySelector('#panelPurchases').addEventListener('click',event=>{const button=event.target.closest('[data-purchase-recap]');if(button)openPurchaseRecap(button.dataset.purchaseRecap,button)});
+    document.querySelector('#purchaseRecapClose').addEventListener('click',()=>document.querySelector('#purchaseRecapDialog').close());
+    document.querySelector('#purchaseRecapDialog').addEventListener('click',event=>{
+      const dialog=event.currentTarget;if(event.target!==dialog)return;const rect=dialog.getBoundingClientRect();
+      if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)dialog.close();
+    });
+    document.querySelector('#purchaseRecapDialog').addEventListener('close',()=>{document.body.style.overflow=purchaseRecapPreviousOverflow;purchaseRecapOpener?.focus({preventScroll:true});purchaseRecapOpener=null});
+
     function renderPurchases(){
-      const wish=organizer.purchases.filter(x=>x.kind==='wish'),bought=organizer.purchases.filter(x=>x.kind==='bought').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      const wish=organizer.purchases.filter(x=>x.kind==='wish'),bought=purchaseRecapData('all').items;
       const photoIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h4l2-2h4l2 2h4v12H4Z"/><circle cx="12" cy="13" r="3"/></svg>';
       const boughtIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/><path d="m8.5 14 2.2 2.2 4.8-4.8"/></svg>';
       const card=x=>{const title=[x.brand,x.name].filter(Boolean).join(' · '),photo=purchasePhotos[x.id]||'',wish=x.kind==='wish';return '<div class="app-item'+(wish?' wishlist-draggable':'')+'" data-purchase-id="'+x.id+'"'+(wish?' data-wishlist-card="true" title="Appui long puis glissez pour déplacer"':'')+'><div class="item-head"><span class="item-title">'+escapeHtml(title)+'</span><strong>'+money(x.price)+'</strong></div><div class="item-meta">'+escapeHtml(x.category||'Autres')+(x.date?' · '+niceDate(x.date):'')+(x.description?' · '+escapeHtml(x.description):'')+'</div><div class="row-actions">'+(x.url?'<a class="small-button" target="_blank" rel="noopener" href="'+escapeHtml(x.url)+'">Voir le produit ↗</a>':'')+(photo?'<button class="purchase-photo-toggle" type="button" data-purchase-photo="'+x.id+'" aria-expanded="false" aria-label="Afficher la photo">'+photoIcon+'</button>':'')+(wish?'<button class="task-icon-action purchase-buy-action" type="button" data-buy="'+x.id+'" aria-label="Marquer comme acheté" title="Marquer comme acheté">'+boughtIcon+'</button>':'')+'<button class="task-icon-action" type="button" data-purchase-edit="'+x.id+'" aria-label="Modifier cet achat" title="Modifier">'+compactEditIcon+'</button><button class="task-icon-action delete" type="button" data-purchase-delete="'+x.id+'" aria-label="Supprimer cet achat" title="Supprimer">'+compactDeleteIcon+'</button></div>'+(photo?'<div class="purchase-photo-preview" data-purchase-photo-preview="'+x.id+'" hidden><img src="'+escapeHtml(photo)+'" alt="Photo de '+escapeHtml(title)+'"></div>':'')+'</div>'};
