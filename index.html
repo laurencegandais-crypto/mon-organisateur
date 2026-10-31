@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v155 : retrouver et réutiliser les produits déjà achetés -->
+<!-- Version v156 : conserver la limite choisie pour l’historique des sauvegardes -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -1090,12 +1090,20 @@
     function safetySnapshot(reason='automatic'){try{return{reason,savedAt:Date.now(),revision:localRevision,goalsState:state,meals,organizer,extras}}catch{return null}}
     function snapshotScore(payload){try{return Object.keys(payload?.meals||{}).length+Object.keys(payload?.goalsState?.checks||{}).length+Math.max(0,(payload?.goalsState?.goals||[]).length-starterGoals.length)*2+(payload?.organizer?.tasks||[]).length*3+(payload?.organizer?.appointments||[]).length*3+(payload?.organizer?.purchases||[]).length*3+(payload?.organizer?.notes||[]).length*3+Object.keys(payload?.organizer?.sleep||{}).length+(payload?.extras?.shopping||[]).length*2+(payload?.extras?.journal||[]).length*2+(payload?.extras?.recipes||[]).length*3+Object.keys(payload?.extras?.weekPlan||{}).length}catch{return 0}}
     function readSafetyBackup(){try{return JSON.parse(localStorage.getItem(dataBackupKey)||'null')}catch{return null}}
-    function readBackupHistory(){try{const value=JSON.parse(localStorage.getItem(dataHistoryKey)||'[]');return Array.isArray(value)?value:[]}catch{return[]}}
+    function readBackupHistoryState(){
+      try{
+        const value=JSON.parse(localStorage.getItem(dataHistoryKey)||'[]');
+        if(Array.isArray(value))return{history:value,limit:8};
+        return{history:Array.isArray(value?.entries)?value.entries:[],limit:value?.limit===2?2:8};
+      }catch{return{history:[],limit:8}}
+    }
+    function readBackupHistory(){return readBackupHistoryState().history}
+    function backupHistoryStorageValue(history,limit){return JSON.stringify(limit===2?{limit:2,entries:history}:history)}
     let localBackupStorageFull=false;
     function isLocalStorageQuotaError(error){return error?.name==='QuotaExceededError'||error?.code===22||error?.code===1014||(!error?.status&&/quota has been exceeded|storage quota exceeded/i.test(String(error?.message||'')))}
     function calendarStorageWarning(){return 'Stockage de l’iPhone saturé : exportez vos données depuis « Sauvegardes ». Ne supprimez pas les données du site.'}
     function writeSafetyBackup(reason){const snapshot=safetySnapshot(reason),previous=readSafetyBackup();if(snapshot&&snapshotScore(snapshot)>=snapshotScore(previous))try{localStorage.setItem(dataBackupKey,JSON.stringify(snapshot));localBackupStorageFull=false}catch(error){if(!isLocalStorageQuotaError(error))throw error;localBackupStorageFull=true;console.warn('La sauvegarde locale précédente est conservée : espace insuffisant.')}}
-    function writeBackupHistory(reason,force=false){const snapshot=safetySnapshot(reason);if(!snapshot)return;const history=readBackupHistory(),last=history[0];if(!force&&last&&Date.now()-Number(last.savedAt)<60000&&snapshotScore(last)===snapshotScore(snapshot))return;history.unshift(snapshot);while(history.length>8)history.pop();try{localStorage.setItem(dataHistoryKey,JSON.stringify(history))}catch{history.pop();try{localStorage.setItem(dataHistoryKey,JSON.stringify(history))}catch{}}}
+    function writeBackupHistory(reason,force=false){const snapshot=safetySnapshot(reason);if(!snapshot)return;const {history,limit}=readBackupHistoryState(),last=history[0];if(!force&&last&&Date.now()-Number(last.savedAt)<60000&&snapshotScore(last)===snapshotScore(snapshot))return;history.unshift(snapshot);while(history.length>limit)history.pop();try{localStorage.setItem(dataHistoryKey,backupHistoryStorageValue(history,limit))}catch{history.pop();try{localStorage.setItem(dataHistoryKey,backupHistoryStorageValue(history,limit))}catch{}}}
     function touchLocalRevision(){if(deferAutomaticImportRevision)return;localRevision=Date.now();localStorage.setItem(dataRevisionKey,String(localRevision));writeSafetyBackup('local-change');writeBackupHistory('automatic')}
     function cleanCloudData(){const clean=JSON.parse(JSON.stringify({goalsState:state,meals,organizer,extras,clientUpdatedAt:localRevision||Date.now()}));clean.updatedAt=cloudSync.serverTime();return clean}
     function scheduleCloudSave(){if(!cloudSync.ready||cloudSync.applying||!cloudSync.user||!cloudSync.document||!cloudSync.setDocument)return;if(snapshotScore(safetySnapshot())===0){setSyncStatus('Aucune donnée locale à envoyer — copie Google préservée');return}clearTimeout(cloudSync.timer);cloudSync.timer=setTimeout(async()=>{setSyncStatus('Synchronisation…');try{await cloudSync.setDocument(cloudSync.document,cleanCloudData());setSyncStatus('Synchronisé avec Google')}catch(error){console.error(error);setSyncStatus('Google impossible · '+(error?.code||'connexion')+' — données locales conservées')}},500)}
@@ -2655,11 +2663,15 @@ Servir le curry avec le riz.`,notes:''}
       }catch(error){alert('L’export a échoué. Les sauvegardes locales restent intactes.')}
     }
     function reduceBackupHistory(){
-      const history=readBackupHistory();
-      if(history.length<=2){showToast('Aucune ancienne sauvegarde à retirer');return}
-      if(!confirm('Avez-vous vérifié que le fichier d’archive est enregistré dans Fichiers ? Les '+(history.length-2)+' anciennes copies de l’historique seront retirées de ce navigateur. Les deux plus récentes et la sauvegarde principale resteront accessibles.'))return;
-      try{localStorage.setItem(dataHistoryKey,JSON.stringify(history.slice(0,2)));document.querySelectorAll('#backupHistory [data-history-index]').forEach(button=>{if(Number(button.dataset.historyIndex)>1)button.remove()});localBackupStorageFull=false;setCalendarSyncStatus('Historique réduit · vérifiez que vos données sont bien enregistrées','');showToast('Deux sauvegardes récentes conservées sur cet iPhone')}
-      catch(error){console.error(error);alert('L’historique n’a pas pu être réduit. Vos sauvegardes restent intactes.')}
+      const history=readBackupHistory(),removed=Math.max(0,history.length-2);
+      const detail=removed?' Les '+removed+' anciennes copies de l’historique seront retirées de ce navigateur.':' Aucune ancienne copie ne sera retirée.';
+      if(!confirm('Avez-vous vérifié que l’archive est enregistrée dans Fichiers ? L’historique sera limité durablement aux deux sauvegardes les plus récentes.'+detail+' Vos données actuelles et la sauvegarde principale seront conservées.'))return;
+      try{
+        localStorage.setItem(dataHistoryKey,backupHistoryStorageValue(history.slice(0,2),2));
+        document.querySelectorAll('#backupHistory [data-history-index]').forEach(button=>{if(Number(button.dataset.historyIndex)>1)button.remove()});
+        localBackupStorageFull=false;setCalendarSyncStatus('Historique limité à deux sauvegardes · réessayez l’enregistrement','');
+        showToast('Historique limité durablement à deux sauvegardes');
+      }catch(error){console.error(error);alert('L’historique n’a pas pu être réduit. Vos sauvegardes restent intactes.')}
     }
     function importDataFile(file){const reader=new FileReader();reader.onload=()=>{try{const backup=JSON.parse(String(reader.result));if(!backup||(!backup.goalsState&&!backup.organizer&&!backup.extras))throw new Error('format');if(confirm('Fusionner le contenu de ce fichier avec les données du site ?'))mergeDataSnapshot(backup)}catch{alert('Ce fichier ne semble pas être une sauvegarde valide du site.')}};reader.readAsText(file)}
     async function restorePrimarySnapshot(backup){
