@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Version v164 : champ de date limite HelloFresh repliable -->
+<!-- Version v165 : champ de date limite HelloFresh repliable -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
@@ -2814,7 +2814,7 @@ Servir le curry avec le riz.`,notes:''}
     function helloFreshManagerRows(key='9999-12-31'){
       const date=key.slice(0,10);
       return helloFreshMealChoices.filter(recipe=>(recipe.availableFrom||'2026-10-15')<=date&&!isHelloFreshChoiceDeleted(recipe.id)&&!helloFreshPlannedSlots(recipe).length).map(recipe=>{
-        return '<div class="hf-choice-row"><div><strong>'+escapeHtml(recipe.name)+'</strong><small>'+recipe.minutes+' min · '+escapeHtml(helloFreshDeliveryLabel(recipe.availableFrom||'2026-10-15'))+'</small><details class="hf-expiry-editor"><summary>'+escapeHtml(helloFreshExpiryDate(recipe.id)?helloFreshExpiryLabel(recipe.id):'Ajouter la date limite')+'</summary><label class="hf-expiry-field">Date limite de consommation<input type="date" data-hf-expiry="'+recipe.id+'" value="'+escapeHtml(helloFreshExpiryDate(recipe.id))+'" aria-label="Date limite de consommation : '+escapeHtml(recipe.name)+'"></label></details></div><button type="button" data-hf-choice-delete="'+recipe.id+'" aria-label="Supprimer définitivement de mes plats : '+escapeHtml(recipe.name)+'">Supprimer</button></div>';
+        return '<div class="hf-choice-row"><div><strong>'+escapeHtml(recipe.name)+'</strong><small>'+recipe.minutes+' min · '+escapeHtml(helloFreshDeliveryLabel(recipe.availableFrom||'2026-10-15'))+'</small><details class="hf-expiry-editor"><summary>'+escapeHtml(helloFreshExpiryDate(recipe.id)?helloFreshExpiryLabel(recipe.id):'Ajouter la date limite')+'</summary><label class="hf-expiry-field">Date limite de consommation<input type="date" data-hf-expiry="'+recipe.id+'" value="'+escapeHtml(helloFreshExpiryDate(recipe.id))+'" aria-label="Date limite de consommation : '+escapeHtml(recipe.name)+'"></label><button type="button" data-hf-expiry-save>Enregistrer la date</button></details></div><button type="button" data-hf-choice-delete="'+recipe.id+'" aria-label="Supprimer définitivement de mes plats : '+escapeHtml(recipe.name)+'">Supprimer</button></div>';
       }).join('')||'<p>Aucune recette disponible pour cette date.</p>';
     }
     function helloFreshMealOptions(date,name,source,key){
@@ -2860,6 +2860,9 @@ Servir le curry avec le riz.`,notes:''}
       });
     }
     function renderSimpleMealPlanner(){
+      const activeEditor=document.querySelector('#mealWeekPlan [data-simple-meal-form]:not([hidden]) .hf-choice-manager[open] .hf-expiry-editor[open]');
+      if(activeEditor && activeEditor.closest('[data-simple-meal-form]').dataset.simpleMealForm===simpleMealEditingSlot && simpleMealEditingSlot.startsWith(mealStripSelected+':'))return;
+
       const start=new Date(mealStripSelected+'T12:00:00');
       ensureMealStripDate(mealStripSelected);
       const weekStart=mealStripDate(mealStripFirst),weekEnd=mealStripDate(mealStripLast),weekFormat=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short'});document.querySelector('#mealWeekTitle').textContent=weekFormat.format(weekStart)+' – '+weekFormat.format(weekEnd);
@@ -2909,8 +2912,10 @@ Servir le curry avec le riz.`,notes:''}
     labelMealNavigation();window.addEventListener('resize',labelMealNavigation);
     for(const [selector,step] of [['#mealWeekPrevious',-1],['#mealWeekNext',1]])document.querySelector(selector).addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();const date=new Date(mealStripSelected+'T12:00:00'),target=mealDesktopNavigation()?new Date(date.getFullYear(),date.getMonth(),date.getDate()+step*7,12):new Date(date.getFullYear(),date.getMonth()+step,1,12);mealStripSelected=dateKey(target.getFullYear(),target.getMonth(),target.getDate());simpleMealEditingSlot='';ensureMealStripDate(mealStripSelected);renderMealPlanner();requestAnimationFrame(()=>showDateAtStripStart(mealDateStrip,'data-meal-jump',mealStripSelected))},true);
     const simpleMealPlan=document.querySelector('#mealWeekPlan');
-    simpleMealPlan.addEventListener('change',event=>{
-      const input=event.target.closest('[data-hf-expiry]');if(!input)return;
+    simpleMealPlan.addEventListener('click',event=>{
+      const save=event.target.closest('[data-hf-expiry-save]');if(!save)return;
+      const input=save.closest('.hf-expiry-editor').querySelector('[data-hf-expiry]');
+      if(!input.reportValidity())return;
       const id=input.dataset.hfExpiry;
       if(!saveHelloFreshExpiry(id,input.value)){input.value=helloFreshExpiryDate(id);return}
       const editor=input.closest('.hf-expiry-editor');
